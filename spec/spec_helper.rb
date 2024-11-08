@@ -6,9 +6,9 @@ require "dotenv/load"
 require "pry"
 require "site_maps"
 
-require_relative "dummy/config/environment"
-ActiveRecord::Migrator.migrations_paths = [File.expand_path("../dummy/db/migrate", __FILE__)]
-require "rails/test_help"
+# require_relative "dummy/config/environment"
+# ActiveRecord::Migrator.migrations_paths = [File.expand_path("../dummy/db/migrate", __FILE__)]
+# require "rails/test_help"
 
 RSpec.configure do |config|
   config.example_status_persistence_file_path = ".rspec_status"
