@@ -29,7 +29,7 @@ prototyping DSL:
 File System
 
 ```ruby
-SiteMaps.use(:file_system, output_directory: 'public/sitemaps') do |s|
+SiteMaps.use(:file_system, directory: 'public/sitemaps') do |s|
   include Rails.application.routes.url_helpers
 
   s.configure do |config|
