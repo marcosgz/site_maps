@@ -41,6 +41,7 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "railties", rails_version
   # spec.add_dependency "rails", rails_version
   spec.add_dependency "zeitwerk", ">= 0"
+  spec.add_dependency "builder", "~> 3.0"
 
   spec.add_development_dependency "dotenv"
   spec.add_development_dependency "pry"
@@ -49,5 +50,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rubocop-performance"
   spec.add_development_dependency "rubocop-rspec"
   spec.add_development_dependency "standard"
-  spec.add_development_dependency "webmock"
 end

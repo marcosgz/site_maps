@@ -9,7 +9,7 @@ RSpec.describe SiteMaps do
 
   describe ".use" do
     it "returns an instance of the adapter" do
-      adapter = SiteMaps.use(:file_system, directory: "tmp")
+      adapter = described_class.use(:file_system, directory: "tmp")
       expect(adapter).to be_a(SiteMaps::Adapters::FileSystem)
       expect(adapter.options).to eq(directory: "tmp")
     end

@@ -15,13 +15,12 @@ end
 module SiteMaps::Primitives
   class String < ::String
     def classify
-      new_str = case
-      when defined?(Dry::Inflector)
+      new_str = if defined?(Dry::Inflector)
         Dry::Inflector.new.classify(self)
-      when defined?(ActiveSupport::Inflector)
+      elsif defined?(ActiveSupport::Inflector)
         ActiveSupport::Inflector.classify(self)
       else
-        self.split("_").map(&:capitalize).join
+        split("_").map(&:capitalize).join
       end
 
       self.class.new(new_str)

@@ -6,7 +6,11 @@ RSpec.describe SiteMaps::Primitives::String do
   describe "#classify" do
     context "when dry-inflector is available" do
       before do
-        stub_const("Dry::Inflector", Class.new { def classify(string); "Classified"; end })
+        stub_const("Dry::Inflector", Class.new {
+                                       def classify(string)
+                                         "Classified"
+                                       end
+                                     })
       end
 
       it "returns the classified string" do
@@ -16,7 +20,11 @@ RSpec.describe SiteMaps::Primitives::String do
 
     context "when active-support is available" do
       before do
-        stub_const("ActiveSupport::Inflector", Class.new { def self.classify(string); "Classified"; end })
+        stub_const("ActiveSupport::Inflector", Class.new {
+                                                 def self.classify(string)
+                                                   "Classified"
+                                                 end
+                                               })
       end
 
       it "returns the classified string" do

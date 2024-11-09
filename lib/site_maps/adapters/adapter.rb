@@ -8,7 +8,7 @@ module SiteMaps::Adapters
       @options = options
       @builder = SiteMaps::Builder.new
       @config = SiteMaps::Configuration.new
-      block.call(@builder) if block_given?
+      yield(@builder) if block
     end
 
     def add(path, **options)

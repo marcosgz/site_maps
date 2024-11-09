@@ -9,7 +9,7 @@ module SiteMaps
     end
 
     def add(path, **options)
-      paths << { path: path, options: options }
+      paths << {path: path, options: options}
     end
   end
 end
