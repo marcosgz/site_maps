@@ -5,8 +5,9 @@ module SiteMaps::Adapters
     attr_reader :url_set
 
     def initialize(**options, &block)
-      @config = SiteMaps.config.becomes(self.class::Config, **options)
+      @config = SiteMaps.config.becomes(config_class, **options)
       @url_set = SiteMaps::Sitemap::URLSet.new
+      @groups = {}
       yield(self) if block
     end
 
@@ -34,24 +35,27 @@ module SiteMaps::Adapters
       @url_set = SiteMaps::Sitemap::UrlSet.new
     end
 
+    def group(group_name, rel_path, &block)
+      @groups[group_name] = {
+        url: File.join(config.remote_sitemap_directory, rel_path),
+        block: block,
+      }
+    end
+
     protected
 
     def build_link(path, params)
-      if config.host.nil?
-        raise SiteMaps::ConfigurationError, <<~ERROR
-          You must set a host in your configuration to use the add method.
-
-          Example:
-            SiteMaps.configure do |config|
-              config.host = "https://example.com"
-            end
-        ERROR
-      end
       SiteMaps::Sitemap::Link.new(config.host, path, params)
     end
 
     def write(location, raw_data)
       raise NotImplementedError
+    end
+
+    def config_class
+      return SiteMaps::Configuration unless defined?(self.class::Config)
+
+      self.class::Config
     end
   end
 end

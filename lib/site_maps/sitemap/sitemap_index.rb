@@ -34,4 +34,3 @@ module SiteMaps::Sitemap
     end
   end
 end
-

@@ -22,11 +22,11 @@ RSpec.describe SiteMaps::Adapters::Adapter do
 
     context "when initialized with options" do
       subject(:adapter) do
-        described_class.new(host: "https://example.com")
+        described_class.new(url: "https://example.com/sitemap.xml")
       end
 
       it "has options" do
-        expect(adapter.config.host).to eq("https://example.com")
+        expect(adapter.config.url).to eq("https://example.com/sitemap.xml")
       end
     end
 
@@ -34,10 +34,10 @@ RSpec.describe SiteMaps::Adapters::Adapter do
       it "yields itself" do
         allow_any_instance_of(SiteMaps::Sitemap::URLSet).to receive(:add) # rubocop:disable RSpec/AnyInstance
         adapter = described_class.new do |sitemap|
-          sitemap.config.host = "https://example.com"
+          sitemap.config.url = "https://example.com/sitemap.xml"
         end
 
-        expect(adapter.config.host).to eq("https://example.com")
+        expect(adapter.config.url).to eq("https://example.com/sitemap.xml")
       end
     end
   end
@@ -68,16 +68,16 @@ RSpec.describe SiteMaps::Adapters::Adapter do
       described_class.new
     end
 
-    context "when host is not set" do
+    context "when url is not set" do
       it "raises an error" do
-        expect { adapter.send(:build_link, "/path", nil) }.to raise_error(SiteMaps::ConfigurationError)
+        expect { adapter.send(:build_link, "/posts", nil) }.to raise_error(SiteMaps::ConfigurationError)
       end
     end
 
-    context "when host is set" do
+    context "when url is set" do
       it "returns a link" do
-        adapter.config.host = "https://example.com"
-        link = adapter.send(:build_link, "/path", nil)
+        adapter.config.url = "https://example.com/sitemap.xml"
+        link = adapter.send(:build_link, "/posts", nil)
         expect(link).to be_a(SiteMaps::Sitemap::Link)
       end
     end

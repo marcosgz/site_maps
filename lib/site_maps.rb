@@ -20,6 +20,7 @@ loader.ignore("#{__dir__}/site-maps.rb")
 loader.ignore("#{__dir__}/site_maps/tasks.rb")
 loader.inflector.inflect "xml" => "XML"
 loader.inflector.inflect "url" => "URL"
+loader.inflector.inflect "dsl" => "DSL"
 loader.inflector.inflect "url_set" => "URLSet"
 loader.log! if ENV["DEBUG_ZEITWERK"]
 loader.setup
@@ -33,16 +34,34 @@ module SiteMaps
   MAX_FILESIZE = 50_000_000 # bytes
 
   Error = Class.new(StandardError)
+  AdapterNotFound = Class.new(Error)
   FullSitemapError = Class.new(Error)
   ConfigurationError = Class.new(Error)
 
-  # @param adapter_name [String, Symbol] The name of the adapter to use
-  # @param options [Hash] Options to pass to the adapter. Note that these are adapter-specific
-  # @param block [Proc] A block to pass to the adapter
-  # @return [Object] An instance of the adapter
-  def self.use(adapter_name, **options, &block)
-    adapter_class = Primitives::String.new(adapter_name.to_s).classify
-    adapter = Adapters.const_get(adapter_class)
-    adapter.new(**options, &block)
+  class << self
+    # @param adapter [Class, String, Symbol] The name of the adapter to use
+    # @param options [Hash] Options to pass to the adapter. Note that these are adapter-specific
+    # @param block [Proc] A block to pass to the adapter
+    # @return [Object] An instance of the adapter
+    def use(adapter, **options, &block)
+      adapter_class = if adapter.is_a?(Class) # && adapter < Adapters::Adapter
+        adapter
+      else
+        const_name = Primitives::String.new(adapter.to_s).classify
+        begin
+          Adapters.const_get(const_name)
+        rescue NameError
+          raise AdapterNotFound, "Adapter #{adapter.inspect} not found"
+        end
+      end
+      adapter_class.new(**options, &block)
+    end
+
+    def config
+      @config ||= Configuration.new
+      yield(@config) if block_given?
+      @config
+    end
+    alias_method :configure, :config
   end
 end

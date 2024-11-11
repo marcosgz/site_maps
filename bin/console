@@ -6,4 +6,9 @@ require "dotenv/load"
 require "pry"
 require "site_maps"
 
+SiteMaps.configure do |config|
+  config.url = "https://example.com/site_maps/sitemap.xml"
+  config.directory = "/tmp/site_maps"
+end
+
 Pry.start

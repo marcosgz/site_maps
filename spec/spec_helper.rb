@@ -6,11 +6,14 @@ require "bundler/setup"
 require "dotenv/load"
 require "pry"
 require "nokogiri"
+require "webmock/rspec"
 require "site_maps"
 
 # require_relative "dummy/config/environment"
 # ActiveRecord::Migrator.migrations_paths = [File.expand_path("../dummy/db/migrate", __FILE__)]
 # require "rails/test_help"
+
+Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
 
 RSpec.configure do |config|
   config.example_status_persistence_file_path = ".rspec_status"

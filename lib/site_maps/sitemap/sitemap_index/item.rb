@@ -17,6 +17,18 @@ class SiteMaps::Sitemap::SitemapIndex::Item < Struct.new(:loc, :lastmod)
   end
   alias_method :==, :eql?
 
+  # def filename
+  #   File.basename(loc)
+  # end
+
+  def relative_path
+    return unless loc =~ %r{^https?://[^/]+(/.*)$}
+
+    val = Regexp.last_match(1)
+    val = val[1..-1] if val.start_with?("/")
+    val
+  end
+
   protected
 
   def_delegator SiteMaps::Sitemap::Normalizer, :w3c_date

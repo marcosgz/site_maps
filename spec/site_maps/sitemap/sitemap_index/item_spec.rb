@@ -43,4 +43,16 @@ RSpec.describe SiteMaps::Sitemap::SitemapIndex::Item do
       expect(item1).not_to eql(item2)
     end
   end
+
+  describe "#relative_path" do
+    it "returns the filename when it is in the root" do
+      item = described_class.new("https://example.com/sitemap2.xml")
+      expect(item.relative_path).to eq("sitemap2.xml")
+    end
+
+    it "returns the relative path when it is not in the root" do
+      item = described_class.new("https://example.com/sitemap/sitemap2.xml")
+      expect(item.relative_path).to eq("sitemap/sitemap2.xml")
+    end
+  end
 end
