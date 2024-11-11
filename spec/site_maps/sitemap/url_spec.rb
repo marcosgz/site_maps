@@ -15,37 +15,37 @@ RSpec.describe SiteMaps::Sitemap::URL do
         priority: 0.5,
         alternates: [],
         videos: [],
-        images: [],
+        images: []
       )
     end
 
     it "wraps alternates" do
-      attributes[:alternates] = { href: "http://example.com/posts.html" }
+      attributes[:alternates] = {href: "http://example.com/posts.html"}
       expect(instance.attributes[:alternates]).to contain_exactly(attributes[:alternates])
     end
 
     it "wraps videos" do
-      attributes[:videos] = { thumbnail_loc: "http://example.com/posts.jpg" }
+      attributes[:videos] = {thumbnail_loc: "http://example.com/posts.jpg"}
       expect(instance.attributes[:videos]).to contain_exactly(attributes[:videos])
     end
 
     it "wraps images" do
-      attributes[:images] = { loc: "http://example.com/posts.jpg" }
+      attributes[:images] = {loc: "http://example.com/posts.jpg"}
       expect(instance.attributes[:images]).to contain_exactly(attributes[:images])
     end
 
     it "wraps video" do
-      attributes[:video] = { thumbnail_loc: "http://example.com/posts.jpg" }
+      attributes[:video] = {thumbnail_loc: "http://example.com/posts.jpg"}
       expect(instance.attributes[:videos]).to contain_exactly(attributes[:video])
     end
 
     it "wraps alternate" do
-      attributes[:alternate] = { href: "http://example.com/posts.html" }
+      attributes[:alternate] = {href: "http://example.com/posts.html"}
       expect(instance.attributes[:alternates]).to contain_exactly(attributes[:alternate])
     end
 
     it "wraps image" do
-      attributes[:image] = { loc: "http://example.com/posts.jpg" }
+      attributes[:image] = {loc: "http://example.com/posts.jpg"}
       expect(instance.attributes[:images]).to contain_exactly(attributes[:image])
     end
   end
@@ -125,8 +125,8 @@ RSpec.describe SiteMaps::Sitemap::URL do
 
   describe "#format_float" do
     it "returns formatted float" do
-      expect(instance.send(:format_float,  0.499999)).to eq("0.5")
-      expect(instance.send(:format_float,  3.444444)).to eq("3.4")
+      expect(instance.send(:format_float, 0.499999)).to eq("0.5")
+      expect(instance.send(:format_float, 3.444444)).to eq("3.4")
       expect(instance.send(:format_float, "0.5")).to eq("0.5")
     end
   end
@@ -164,7 +164,7 @@ RSpec.describe SiteMaps::Sitemap::URL do
 
     context "with lastmod" do
       let(:time) { Time.at(0) }
-      let(:attributes) { { lastmod: time } }
+      let(:attributes) { {lastmod: time} }
 
       it "returns url with lastmod" do
         expect(doc.css("url lastmod").text).to eq(time.strftime("%Y-%m-%dT%H:%M:%S%:z"))
@@ -173,7 +173,7 @@ RSpec.describe SiteMaps::Sitemap::URL do
 
     context "with expires" do
       let(:time) { Time.at(0) }
-      let(:attributes) { { expires: time } }
+      let(:attributes) { {expires: time} }
 
       it "returns url with expires" do
         expect(doc.css("url expires").text).to eq(time.strftime("%Y-%m-%dT%H:%M:%S%:z"))
@@ -181,7 +181,7 @@ RSpec.describe SiteMaps::Sitemap::URL do
     end
 
     context "with news" do
-      let(:attributes) { { news: { publication_name: "Example", publication_date: "2010-01-01" } } }
+      let(:attributes) { {news: {publication_name: "Example", publication_date: "2010-01-01"}} }
 
       it "returns url with news" do
         expect(doc.css("url news|news news|publication news|name").text).to eq("Example")

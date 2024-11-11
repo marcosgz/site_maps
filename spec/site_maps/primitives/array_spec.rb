@@ -21,7 +21,7 @@ RSpec.describe SiteMaps::Primitives::Array do
     end
 
     specify do
-      expect(described_class.wrap({ a: :b }).to_a).to eq([{ a: :b }])
+      expect(described_class.wrap({a: :b}).to_a).to eq([{a: :b}])
     end
   end
 end

@@ -5,10 +5,14 @@ require_relative "site_maps/version"
 
 # require "active_support"
 require "builder"
+require "date"
+require "fileutils"
+require "rack/utils"
 require "stringio"
 require "time"
-require "date"
+require "uri"
 require "zeitwerk"
+require "zlib"
 
 loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
 loader.ignore("#{__dir__}/site-maps.rb")
@@ -29,6 +33,7 @@ module SiteMaps
 
   Error = Class.new(StandardError)
   FullSitemapError = Class.new(Error)
+  ConfigurationError = Class.new(Error)
 
   # @param adapter_name [String, Symbol] The name of the adapter to use
   # @param options [Hash] Options to pass to the adapter. Note that these are adapter-specific

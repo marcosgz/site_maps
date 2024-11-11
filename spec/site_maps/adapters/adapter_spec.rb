@@ -3,37 +3,41 @@
 require "spec_helper"
 
 RSpec.describe SiteMaps::Adapters::Adapter do
+  let(:adapter_config) do
+    Class.new(SiteMaps::Configuration)
+  end
+
+  before do
+    stub_const("SiteMaps::Adapters::Adapter::Config", adapter_config)
+  end
+
   describe "#initialize" do
     subject(:adapter) do
       described_class.new
     end
 
-    it "has options" do
-      expect(adapter.options).to eq({})
-    end
-
-    it "has a builder" do
-      expect(adapter.builder).to be_a(SiteMaps::Builder)
+    it "has a url_set" do
+      expect(adapter.url_set).to be_a(SiteMaps::Sitemap::URLSet)
     end
 
     context "when initialized with options" do
       subject(:adapter) do
-        described_class.new(foo: :bar)
+        described_class.new(host: "https://example.com")
       end
 
       it "has options" do
-        expect(adapter.options).to eq(foo: :bar)
+        expect(adapter.config.host).to eq("https://example.com")
       end
     end
 
     context "when initialized with a block" do
-      it "yields the builder" do
-        allow_any_instance_of(SiteMaps::Builder).to receive(:add)
+      it "yields itself" do
+        allow_any_instance_of(SiteMaps::Sitemap::URLSet).to receive(:add) # rubocop:disable RSpec/AnyInstance
         adapter = described_class.new do |sitemap|
-          sitemap.add("/")
+          sitemap.config.host = "https://example.com"
         end
 
-        expect(adapter.builder).to have_received(:add).with("/")
+        expect(adapter.config.host).to eq("https://example.com")
       end
     end
   end
@@ -56,6 +60,26 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     it "yields self" do
       config = adapter.config
       expect { |b| adapter.configure(&b) }.to yield_with_args(config)
+    end
+  end
+
+  describe "#build_link" do
+    subject(:adapter) do
+      described_class.new
+    end
+
+    context "when host is not set" do
+      it "raises an error" do
+        expect { adapter.send(:build_link, "/path", nil) }.to raise_error(SiteMaps::ConfigurationError)
+      end
+    end
+
+    context "when host is set" do
+      it "returns a link" do
+        adapter.config.host = "https://example.com"
+        link = adapter.send(:build_link, "/path", nil)
+        expect(link).to be_a(SiteMaps::Sitemap::Link)
+      end
     end
   end
 end

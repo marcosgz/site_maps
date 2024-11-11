@@ -4,7 +4,7 @@ module SiteMaps::Sitemap
   class URL
     DEFAULTS = {
       changefreq: "weekly",
-      priority: 0.5,
+      priority: 0.5
     }.freeze
 
     attr_reader :attributes
@@ -137,7 +137,7 @@ module SiteMaps::Sitemap
     private
 
     def format_float(value)
-      value.is_a?(String) ? value : ('%0.1f' % value)
+      value.is_a?(String) ? value : ("%0.1f" % value)
     end
 
     def yes_or_no(value)
@@ -156,7 +156,7 @@ module SiteMaps::Sitemap
       if date.is_a?(String)
         date
       elsif date.respond_to?(:iso8601)
-        date.iso8601.sub(/Z$/i, '+00:00')
+        date.iso8601.sub(/Z$/i, "+00:00")
       elsif date.is_a?(Date) && defined?(DateTime) && !date.is_a?(DateTime)
         date.strftime("%Y-%m-%d")
       else
@@ -166,14 +166,12 @@ module SiteMaps::Sitemap
           date.utc
         elsif date.is_a?(Integer)
           Time.at(date).utc
-        else
-          nil
         end
 
         if zulutime
           zulutime.strftime("%Y-%m-%dT%H:%M:%S+00:00")
         else
-          zone = date.strftime('%z').insert(-3, ':')
+          zone = date.strftime("%z").insert(-3, ":")
           date.strftime("%Y-%m-%dT%H:%M:%S") + zone
         end
       end

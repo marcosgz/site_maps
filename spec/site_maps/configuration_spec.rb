@@ -37,5 +37,45 @@ RSpec.describe SiteMaps::Configuration do
     it "has a directory" do
       expect(configuration.directory).to eq("tmp")
     end
+
+    context "when passing unknown attribute" do
+      it "raises ConfigurationError error" do
+        expect {
+          described_class.new(undefined: "value")
+        }.to raise_error(SiteMaps::ConfigurationError)
+      end
+    end
+  end
+
+  describe "#becomes" do
+    let(:config_class) do
+      Class.new(described_class)
+    end
+
+    it "returns a new instance of the class with the same options" do
+      new_config = configuration.becomes(config_class)
+
+      expect(new_config.host).to eq(configuration.host)
+      expect(new_config.main_filename).to eq(configuration.main_filename)
+      expect(new_config.directory).to eq(configuration.directory)
+    end
+
+    it "allows overriding options" do
+      new_config = configuration.becomes(config_class, host: "https://example.com")
+
+      expect(new_config.host).to eq("https://example.com")
+      expect(new_config.main_filename).to eq(configuration.main_filename)
+      expect(new_config.directory).to eq(configuration.directory)
+    end
+  end
+
+  describe "#to_h" do
+    it "returns a hash of the configuration" do
+      expect(configuration.to_h).to include(
+        host: nil,
+        main_filename: "sitemap.xml",
+        directory: "/tmp/sitemaps"
+      )
+    end
   end
 end
