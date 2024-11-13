@@ -3,6 +3,7 @@ PATH
   specs:
     site_maps (0.0.1.beta1)
       builder (~> 3.0)
+      concurrent-ruby (>= 1.1)
       rack (>= 2.0)
       zeitwerk
 

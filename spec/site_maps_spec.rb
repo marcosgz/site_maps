@@ -12,6 +12,7 @@ RSpec.describe SiteMaps do
       adapter = described_class.use(:file_system, directory: "tmp")
       expect(adapter).to be_a(SiteMaps::Adapters::FileSystem)
       expect(adapter.config.directory).to eq("tmp")
+      expect(SiteMaps.current_adapter).to eq(adapter)
     end
 
     it "raises an error if the adapter is not found" do
@@ -38,6 +39,40 @@ RSpec.describe SiteMaps do
 
       expect(described_class.config.url).to eq("https://example.com/sitemap.xml")
       expect(described_class.config.directory).to eq("tmp")
+    end
+  end
+
+  describe ".current_adapter" do
+    after do
+      described_class.instance_variable_set(:@current_adapter, nil)
+    end
+
+    it "returns the current adapter" do
+      adapter = described_class.use(:file_system, directory: "tmp")
+      expect(described_class.current_adapter).to eq(adapter)
+    end
+  end
+
+  describe ".generate" do
+    before do
+      described_class.instance_variable_set(:@current_adapter, nil)
+    end
+
+    it "delegates to the current adapter" do
+      adapter = described_class.use(:file_system, directory: "tmp")
+      expect(described_class.generate).to be_an_instance_of(SiteMaps::Runner)
+    end
+
+    it "raises an error if no adapter is set" do
+      expect {
+        described_class.generate
+      }.to raise_error(SiteMaps::AdapterNotSetError)
+    end
+
+    it "loads the configuration file" do
+      runner = described_class.generate(config_file: fixture_path("noop_sitemap_config.rb"))
+      expect(runner.adapter).to be_an_instance_of(SiteMaps::Adapters::Noop)
+      expect(described_class.current_adapter).to be(runner.adapter)
     end
   end
 end

@@ -16,8 +16,8 @@ RSpec.describe SiteMaps::Adapters::Adapter do
       described_class.new
     end
 
-    it "has a url_set" do
-      expect(adapter.url_set).to be_a(SiteMaps::Sitemap::URLSet)
+    it "has a sitemap_index" do
+      expect(adapter.sitemap_index).to be_a(SiteMaps::Sitemap::SitemapIndex)
     end
 
     context "when initialized with options" do
@@ -31,13 +31,21 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
 
     context "when initialized with a block" do
-      it "yields itself" do
-        allow_any_instance_of(SiteMaps::Sitemap::URLSet).to receive(:add) # rubocop:disable RSpec/AnyInstance
-        adapter = described_class.new do |sitemap|
-          sitemap.config.url = "https://example.com/sitemap.xml"
+      it "evaluates the block" do
+        instance = described_class.new do
+          configure { |c| c.url = "https://example.com/sitemap.xml" }
+          config.directory = "/tmp"
+
+          posts_index = "/posts.html"
+
+          process(:posts) do |sitemap, **|
+            sitemap.add(posts_index)
+          end
         end
 
-        expect(adapter.config.url).to eq("https://example.com/sitemap.xml")
+        expect(instance.config.url).to eq("https://example.com/sitemap.xml")
+        expect(instance.config.directory).to eq("/tmp")
+        expect(instance.processes).to have_key(:posts)
       end
     end
   end
@@ -63,23 +71,33 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
   end
 
-  describe "#build_link" do
-    subject(:adapter) do
-      described_class.new
+  describe "#process" do
+    subject(:adapter) { described_class.new }
+
+    it "creates a process" do
+      adapter.process { |*, **| raise("do not call") }
+      expect(adapter.processes).to have_key(:default)
     end
 
-    context "when url is not set" do
-      it "raises an error" do
-        expect { adapter.send(:build_link, "/posts", nil) }.to raise_error(SiteMaps::ConfigurationError)
-      end
+    it "raises an error if the process is already defined" do
+      adapter.process { |*, **| }
+      expect { adapter.process { |*, **| } }.to raise_error(ArgumentError)
     end
 
-    context "when url is set" do
-      it "returns a link" do
-        adapter.config.url = "https://example.com/sitemap.xml"
-        link = adapter.send(:build_link, "/posts", nil)
-        expect(link).to be_a(SiteMaps::Sitemap::Link)
-      end
+    it "creates a process with the given name" do
+      adapter.process(:posts) { |*, **| }
+      expect(adapter.processes).to have_key(:posts)
+    end
+
+    it "creates a process with the given location" do
+      adapter.process(:posts, "posts/sitemap.xml") { |*, **| raise("do not call") }
+      expect(adapter.processes[:posts].location).to eq("posts/sitemap.xml")
+    end
+
+    it "creates a dynamic process" do
+      adapter.process(:posts, "posts/%{year}/sitemap.xml", year: 2020) { |*, **| raise("do not call") }
+      expect(adapter.processes[:posts].location).to eq("posts/2020/sitemap.xml")
+      expect(adapter.processes[:posts].location(year: 2024)).to eq("posts/2024/sitemap.xml")
     end
   end
 end

@@ -2,13 +2,22 @@
 
 module SiteMaps::Adapters
   class Adapter
-    attr_reader :url_set
+    class << self
+      def config_class
+        return SiteMaps::Configuration unless defined?(self::Config)
+
+        self::Config
+      end
+    end
+
+    attr_reader :sitemap_index, :processes
 
     def initialize(**options, &block)
-      @config = SiteMaps.config.becomes(config_class, **options)
-      @url_set = SiteMaps::Sitemap::URLSet.new
-      @groups = {}
-      yield(self) if block
+      @config = SiteMaps.config.becomes(self.class.config_class, **options)
+      @sitemap_index = SiteMaps::Sitemap::SitemapIndex.new
+
+      @processes = Concurrent::Hash.new
+      instance_exec(&block) if block
     end
 
     def config
@@ -17,45 +26,11 @@ module SiteMaps::Adapters
     end
     alias_method :configure, :config
 
-    def sitemap_index
-      @sitemap_index ||= self.class::SitemapIndex.new(config)
-    end
+    def process(name = :default, location = nil, **kwargs, &block)
+      name = name.to_sym
+      raise ArgumentError, "Process #{name} already defined" if @processes.key?(name)
 
-    def add(path, params: nil, **options)
-      link = build_link(path, params)
-      url_set.add(link, **options)
-    rescue SiteMaps::FullSitemapError
-      finalize_url_set
-    end
-
-    def finalize_url_set
-      raw_data = url_set.finalize
-      write(location, raw_data)
-      sitemap_index.add(location, lastmod: Time.now)
-      @url_set = SiteMaps::Sitemap::UrlSet.new
-    end
-
-    def group(group_name, rel_path, &block)
-      @groups[group_name] = {
-        url: File.join(config.remote_sitemap_directory, rel_path),
-        block: block,
-      }
-    end
-
-    protected
-
-    def build_link(path, params)
-      SiteMaps::Sitemap::Link.new(config.host, path, params)
-    end
-
-    def write(location, raw_data)
-      raise NotImplementedError
-    end
-
-    def config_class
-      return SiteMaps::Configuration unless defined?(self.class::Config)
-
-      self.class::Config
+      @processes[name] = SiteMaps::Process.new(name, location, **kwargs, &block)
     end
   end
 end

@@ -5,6 +5,7 @@ require_relative "site_maps/version"
 
 # require "active_support"
 require "builder"
+require "concurrent-ruby"
 require "date"
 require "fileutils"
 require "forwardable"
@@ -35,10 +36,13 @@ module SiteMaps
 
   Error = Class.new(StandardError)
   AdapterNotFound = Class.new(Error)
+  AdapterNotSetError = Class.new(Error)
   FullSitemapError = Class.new(Error)
   ConfigurationError = Class.new(Error)
 
   class << self
+    attr_reader :current_adapter
+
     # @param adapter [Class, String, Symbol] The name of the adapter to use
     # @param options [Hash] Options to pass to the adapter. Note that these are adapter-specific
     # @param block [Proc] A block to pass to the adapter
@@ -54,7 +58,7 @@ module SiteMaps
           raise AdapterNotFound, "Adapter #{adapter.inspect} not found"
         end
       end
-      adapter_class.new(**options, &block)
+      @current_adapter = adapter_class.new(**options, &block)
     end
 
     def config
@@ -63,5 +67,35 @@ module SiteMaps
       @config
     end
     alias_method :configure, :config
+
+    # Load and prepare a runner with the current adapter
+    # Note that it won't start running until you call `#run` on the runner
+    #
+    # Example:
+    #   SiteMaps.generate(config_file: "config/site_maps.rb", max_threads: 10)
+    #     .enqueue_all
+    #     .run
+    #
+    # You may also enqueue processes manually, specially those that are dynamic
+    #
+    # Example:
+    #   SiteMaps.generate(config_file: "config/site_maps.rb", max_threads: 10)
+    #     .enqueue(:monthly, year: 2020, month: 1)
+    #     .enqueue(:monthly, year: 2020, month: 2)
+    #     .enqueue_remaining # Enqueue all other non-enqueued processes
+    #     .run
+    #
+    # @param config_file [String] The path to a configuration file
+    # @param options [Hash] Options to pass to the runner
+    # @return [Runner] An instance of the runner
+    def generate(config_file: nil, **options)
+      if config_file
+        @current_adapter = nil
+        load(config_file)
+      end
+      raise AdapterNotSetError, "No adapter set. Use SiteMaps.use to set an adapter" unless current_adapter
+
+      Runner.new(current_adapter, **options)
+    end
   end
 end

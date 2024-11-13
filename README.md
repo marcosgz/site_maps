@@ -29,29 +29,29 @@ prototyping DSL:
 File System
 
 ```ruby
-SiteMaps.use(:file_system, directory: 'public/sitemaps') do
-  include Rails.application.routes.url_helpers
+SiteMaps.use(:file_system) do
+  include_module(Rails.application.routes.url_helpers)
 
   configure do |config|
-    config.url = 'https://example.com/sitemaps/sitemap.xml.gz'
+    config.url = 'https://example.com/sitemaps/sitemap.xml.gz' # Location of main sitemap index file
     config.directory = 'public/sitemaps'
   end
 
-  generate do
+  # Each process will be executed in a separate thread in order to improve performance
+  process do |s|
     s.add(root_path, priority: 1.0, changefreq: 'daily')
     s.add(about_path, priority: 0.9, changefreq: 'weekly')
   end
 
-  generate(:posts, "posts/%{year}-%{month}/sitemap.xml") do |s, year: Date.current.year, month: Date.current.month|
-    date_range = Date.new(year, month, 1)..Date.new(year, month, -1)
-    Post.where(published_at: date_range).find_each do |post|
-      s.add(post_path(post), lastmod: post.updated_at, priority: 0.8)
+  process :categories, "categories/sitemap.xml" do |s|
+    Category.find_each do |category|
+      s.add(category_path(category), priority: 0.7)
     end
   end
 
-  generate(:categories, "categories/sitemap.xml") do |s|
-    Category.find_each do |category|
-      s.add(category_path(category), priority: 0.7)
+  process :posts, "posts/%{year}-%{month}/sitemap.xml", year: Date.today.year, month: Date.today.month do |s, year, month|
+    Post.where(year: year, month: month).find_each do |post|
+      s.add(post_path(post), priority: 0.8)
     end
   end
 end
@@ -65,7 +65,7 @@ aws_sdk_options = {
   region: 'us-east-1',
   access_key_id: 'my-access-key',
   secret_access_key: 'my-secret-key'
-  # Optional parameters
+  # Optional parameters (default values)
   acl: 'public-read',
   cache_control: 'private, max-age=0, no-cache',
 }
@@ -73,13 +73,14 @@ aws_sdk_options = {
 SiteMaps.use(:aws_sdk, **aws_sdk_options) do |s|
   include Rails.application.routes.url_helpers
 
-  s.configure do |config|
+  configure do |config|
     config.url = 'https://my-bucket.s3.amazonaws.com/sitemaps/sitemap.xml.gz'
   end
 
-  s.add(root_path, priority: 1.0, changefreq: 'daily')
-  s.add(about_path, priority: 0.9, changefreq: 'weekly')
-
+  sitemap do |s|
+    s.add(root_path, priority: 1.0, changefreq: 'daily')
+    s.add(about_path, priority: 0.9, changefreq: 'weekly')
+  end
   # ...
 end
 ```

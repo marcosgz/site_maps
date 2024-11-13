@@ -15,7 +15,7 @@ module SiteMaps::Sitemap
     attr_reader :sitemaps
 
     def initialize
-      @sitemaps = Set.new
+      @sitemaps = Concurrent::Set.new
     end
 
     def add(loc, lastmod: nil)
