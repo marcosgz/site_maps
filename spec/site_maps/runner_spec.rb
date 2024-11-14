@@ -156,5 +156,28 @@ RSpec.describe SiteMaps::Runner do
         expect(process).to have_received(:call)
       end
     end
+
+    it "interrupts the execution if a process fails" do
+      runner = described_class.new(adapter, max_threads: 1)
+      adapter.process(:failure) do |s|
+        raise ArgumentError, "Failure"
+      end
+      runner.enqueue(:failure)
+      runner.enqueue(:default)
+      execution = runner.instance_variable_get(:@execution)
+
+      failure = execution[:failure].first.first
+      default = execution[:default].first.first
+      allow(failure).to receive(:call).and_call_original
+      allow(default).to receive(:call).and_call_original
+
+      expect { runner.run }.to raise_error(SiteMaps::RunnerError).with_message(<<~MSG)
+        Errors occurred while processing sitemap:
+          * Process[failure] error: Failure
+      MSG
+
+      expect(failure).to have_received(:call)
+      expect(default).not_to have_received(:call)
+    end
   end
 end

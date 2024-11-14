@@ -17,6 +17,10 @@ class SiteMaps::Adapters::AwsSdk::Config < SiteMaps::Configuration
     @aws_extra_options = options.reject { |k, v| defined_attrs.key?(k) }
   end
 
+  def s3_bucket
+    config.s3_resource.bucket(bucket)
+  end
+
   def s3_resource
     @s3_resource ||= begin
       require "aws-sdk-s3"

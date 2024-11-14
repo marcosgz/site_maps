@@ -75,4 +75,18 @@ RSpec.describe SiteMaps do
       expect(described_class.current_adapter).to be(runner.adapter)
     end
   end
+
+  describe ".logger" do
+    it "returns the default logger" do
+      expect(described_class.logger).to be_a(Logger)
+    end
+  end
+
+  describe ".logger=" do
+    it "sets the logger" do
+      logger = Logger.new($stdout)
+      described_class.logger = logger
+      expect(described_class.logger).to be(logger)
+    end
+  end
 end

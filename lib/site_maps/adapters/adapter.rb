@@ -20,6 +20,31 @@ module SiteMaps::Adapters
       instance_exec(&block) if block
     end
 
+    # @abstract
+    # @param [String] url The remote URL to write to
+    # @param [String] raw_data The raw data to write
+    # @return [void]
+    # @raise [SiteMaps::Error] if the write operation fails
+    def write(_url, _raw_data)
+      raise NotImplementedError
+    end
+
+    # @abstract
+    # @param [String] url The remote URL to read from
+    # @return [Array<String, Hash>] The raw data and metadata
+    # @raise [SiteMaps::FileNotFoundError] if the file does not exist
+    def read(_url)
+      raise NotImplementedError
+    end
+
+    # @abstract
+    # @param [String] url The remote URL to delete
+    # @return [void]
+    # @raise [SiteMaps::FileNotFoundError] if the file does not exist
+    def delete(_url)
+      raise NotImplementedError
+    end
+
     def config
       yield(@config) if block_given?
       @config
@@ -31,10 +56,6 @@ module SiteMaps::Adapters
       raise ArgumentError, "Process #{name} already defined" if @processes.key?(name)
 
       @processes[name] = SiteMaps::Process.new(name, location, kwargs, block)
-    end
-
-    def write(location, raw_data)
-      raise NotImplementedError
     end
 
     def maybe_inline_urlset?

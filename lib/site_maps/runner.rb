@@ -38,21 +38,17 @@ module SiteMaps
     alias_method :enqueue_all, :enqueue_remaining
 
     def run
+      may_preload_sitemap_index
       @execution.each do |_process_name, items|
         items.each do |process, kwargs|
           Concurrent::Future.execute(executor: pool) do
-            next if failed.true?
-
-            begin
+            wrap_process_execution(process) do
               builder = SiteMaps::SitemapBuilder.new(
                 adapter: adapter,
                 location: process.location
               )
               process.call(builder, **kwargs)
               builder.finalize!
-            rescue => e
-              handle_process_error(process, e)
-              failed.make_true
             end
           end
         end
@@ -67,7 +63,7 @@ module SiteMaps
 
     private
 
-    attr_reader :pool, :failed
+    attr_reader :pool, :failed, :errors
 
     def finalize!
       unless adapter.sitemap_index.empty?
@@ -77,11 +73,47 @@ module SiteMaps
     end
 
     def fail_with_errors!
-      # @TODO raise
+      return if errors.empty?
+
+      raise SiteMaps::RunnerError.new(errors)
     end
 
     def handle_process_error(process, error)
-      @errors << [process, error]
+      errors << [process, error]
+    end
+
+    def may_preload_sitemap_index
+      return unless preload_sitemap_index_links?
+
+      process = SiteMaps::Process.new(
+        :read_index_sitemap,
+        nil,
+        nil,
+        ->(*) {}
+      )
+
+      # I'm not using a future here because I want to make sure
+      # the index file will be readed before any other process
+      # overwrites it
+      wrap_process_execution(process) do
+        process.call(nil)
+      end
+    end
+
+    def wrap_process_execution(process)
+      return if failed.true?
+
+      yield
+    rescue => e
+      handle_process_error(process, e)
+      failed.make_true
+    end
+
+    def preload_sitemap_index_links?
+      return false if @execution.empty?
+
+      (@adapter.processes.keys - @execution.keys).any? || # There are processes that have not been enqueued
+        @execution.any? { |_, items| items.any? { |process, _| process.dynamic? } } # There are dynamic processes
     end
   end
 end

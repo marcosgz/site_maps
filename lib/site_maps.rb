@@ -33,15 +33,26 @@ module SiteMaps
     news: 1_000
   }
   MAX_FILESIZE = 50_000_000 # bytes
+  DEFAULT_LOGGER = Logger.new($stdout)
 
   Error = Class.new(StandardError)
   AdapterNotFound = Class.new(Error)
   AdapterNotSetError = Class.new(Error)
+  FileNotFoundError = Class.new(Error)
   FullSitemapError = Class.new(Error)
   ConfigurationError = Class.new(Error)
+  RunnerError = Class.new(Error) do
+    def initialize(processes_and_errors)
+      super(<<~MSG)
+        Errors occurred while processing sitemap:
+          * #{processes_and_errors.map { |process, error| "Process[#{process.name}] error: #{error.message}" }.join("\n")}
+      MSG
+    end
+  end
 
   class << self
     attr_reader :current_adapter
+    attr_writer :logger
 
     # @param adapter [Class, String, Symbol] The name of the adapter to use
     # @param options [Hash] Options to pass to the adapter. Note that these are adapter-specific
@@ -96,6 +107,10 @@ module SiteMaps
       raise AdapterNotSetError, "No adapter set. Use SiteMaps.use to set an adapter" unless current_adapter
 
       Runner.new(current_adapter, **options)
+    end
+
+    def logger
+      @logger ||= DEFAULT_LOGGER
     end
   end
 end
