@@ -8,6 +8,8 @@ module SiteMaps
       @adapter = adapter
       @pool = Concurrent::FixedThreadPool.new(max_threads)
       @execution = Concurrent::Hash.new
+      @failed = Concurrent::AtomicBoolean.new(false)
+      @errors = Concurrent::Array.new
     end
 
     def enqueue(process_name = :default, **kwargs)
@@ -39,7 +41,19 @@ module SiteMaps
       @execution.each do |_process_name, items|
         items.each do |process, kwargs|
           Concurrent::Future.execute(executor: pool) do
-            process.call(nil, **kwargs)
+            next if failed.true?
+
+            begin
+              builder = SiteMaps::SitemapBuilder.new(
+                adapter: adapter,
+                location: process.location
+              )
+              process.call(builder, **kwargs)
+              builder.finalize!
+            rescue => e
+              handle_process_error(process, e)
+              failed.make_true
+            end
           end
         end
       end
@@ -47,10 +61,27 @@ module SiteMaps
       pool.shutdown
       pool.wait_for_termination
       @execution.clear
+
+      failed.false? ? finalize! : fail_with_errors!
     end
 
     private
 
-    attr_reader :pool
+    attr_reader :pool, :failed
+
+    def finalize!
+      unless adapter.sitemap_index.empty?
+        raw_data = adapter.sitemap_index.to_xml
+        adapter.write(adapter.config.url, raw_data)
+      end
+    end
+
+    def fail_with_errors!
+      # @TODO raise
+    end
+
+    def handle_process_error(process, error)
+      @errors << [process, error]
+    end
   end
 end

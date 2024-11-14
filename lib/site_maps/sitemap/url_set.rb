@@ -29,6 +29,7 @@ module SiteMaps::Sitemap
       @content.puts(HEADER)
       @links_count = 0
       @news_count = 0
+      @last_modified = nil
     end
 
     def add(link, **options)
@@ -38,10 +39,14 @@ module SiteMaps::Sitemap
       content.puts(url.to_xml)
       @links_count += 1
       @news_count += 1 if url.news?
+      if (lastmod = url.last_modified)
+        @last_modified ||= lastmod
+        @last_modified = lastmod if lastmod > @last_modified
+      end
       url
     end
 
-    def finalize
+    def finalize!
       return if finalized?
 
       content.puts(FOOTER)
@@ -58,6 +63,14 @@ module SiteMaps::Sitemap
 
     def finalized?
       defined?(@to_xml)
+    end
+
+    def empty?
+      links_count.zero?
+    end
+
+    def last_modified
+      @last_modified || Time.now
     end
 
     private

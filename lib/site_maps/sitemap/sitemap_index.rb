@@ -32,5 +32,9 @@ module SiteMaps::Sitemap
       io.puts(FOOTER)
       io.string
     end
+
+    def empty?
+      @sitemaps.empty?
+    end
   end
 end

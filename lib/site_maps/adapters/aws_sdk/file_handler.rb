@@ -16,7 +16,6 @@ class SiteMaps::Adapters::AwsSdk::FileHandler
   end
 
   def write(location, raw_data)
-
   end
 
   def read(remote_path)
@@ -34,7 +33,7 @@ class SiteMaps::Adapters::AwsSdk::FileHandler
 
   private
 
-  def list_objects(prefix: )
+  def list_objects(prefix:)
     config.s3_resource.bucket(config.bucket).objects(
       prefix: prefix
     )

@@ -34,15 +34,23 @@ module SiteMaps
     protected
 
     def read_file
-      ::URI.open(@location.to_s)
-    rescue Errno::ENOENT => e
+      if remote?
+        ::URI.parse(@location.to_s).open
+      else
+        ::File.open(@location, "r")
+      end
+    rescue Errno::ENOENT
       raise FileNotFound.new("The file #{@location} does not exist")
-    rescue OpenURI::HTTPError => e
+    rescue OpenURI::HTTPError
       raise FileNotFound.new("The file #{@location} could not be opened")
     end
 
     def compressed?
       @location.extname == ".gz"
+    end
+
+    def remote?
+      %r{^https?://}.match?(@location.to_s)
     end
   end
 end

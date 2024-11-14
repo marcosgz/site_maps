@@ -114,4 +114,17 @@ RSpec.describe SiteMaps::Sitemap::URL do
       end
     end
   end
+
+  describe "#last_modified" do
+    it "returns last modified date" do
+      time = Time.new(2021, 1, 1)
+      attributes[:lastmod] = time
+
+      expect(instance.last_modified).to eq(time)
+    end
+
+    it "returns nil if last modified date is not set" do
+      expect(instance.last_modified).to be_nil
+    end
+  end
 end

@@ -100,11 +100,11 @@ RSpec.describe SiteMaps::Sitemap::URLSet do
     end
   end
 
-  describe "#finalize" do
+  describe "#finalize!" do
     it "finalizes the content and returns it as a string" do
       instance = described_class.new
       instance.add("http://example.com")
-      content = instance.finalize
+      content = instance.finalize!
 
       expect(content).to include("<url>")
       expect(content).to include("</urlset>")
@@ -126,12 +126,68 @@ RSpec.describe SiteMaps::Sitemap::URLSet do
     it "returns the finalized content as a string" do
       instance = described_class.new
       instance.add("http://example.com")
-      instance.finalize
+      instance.finalize!
       content = instance.to_xml
 
       expect(content).to include("<url>")
       expect(content).to include("</urlset>")
       expect(content).to be_frozen
+    end
+  end
+
+  describe "#finalized?" do
+    it "returns true if the content is finalized" do
+      instance = described_class.new
+      instance.add("http://example.com")
+      instance.finalize!
+
+      expect(instance).to be_finalized
+    end
+
+    it "returns false if the content is not finalized" do
+      instance = described_class.new
+      instance.add("http://example.com")
+
+      expect(instance).not_to be_finalized
+    end
+  end
+
+  describe "#empty?" do
+    it "returns true if the links_count is zero" do
+      instance = described_class.new
+
+      expect(instance).to be_empty
+    end
+
+    it "returns false if the links_count is not zero" do
+      instance = described_class.new
+      instance.add("http://example.com")
+
+      expect(instance).not_to be_empty
+    end
+  end
+
+  describe "#last_modified" do
+    it "returns the last modified date" do
+      instance = described_class.new
+      instance.add("http://example.com", lastmod: Time.new(2021, 1, 1))
+
+      expect(instance.last_modified).to eq(Time.new(2021, 1, 1))
+    end
+
+    it "returns the current time if no last modified date is set" do
+      instance = described_class.new
+
+      expect(instance.last_modified).to be_within(1).of(Time.now)
+    end
+
+    it "returns the greatest last modified date" do
+      instance = described_class.new
+      instance.add("http://example.com", lastmod: Time.new(2021, 2, 1))
+      instance.add("http://example.com", lastmod: Time.new(2021, 2, 2))
+      instance.add("http://example.com", lastmod: Time.new(2021, 1, 1))
+
+      expect(instance.last_modified).to eq(Time.new(2021, 2, 2))
     end
   end
 end

@@ -36,7 +36,7 @@ module SiteMaps
 
       @__linksets[group_name] = {
         path: path,
-        block: block,
+        block: block
       }
     end
 
@@ -51,7 +51,6 @@ module SiteMaps
     private
 
     def start(max_threads:)
-
     end
   end
 end

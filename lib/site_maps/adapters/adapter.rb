@@ -30,7 +30,15 @@ module SiteMaps::Adapters
       name = name.to_sym
       raise ArgumentError, "Process #{name} already defined" if @processes.key?(name)
 
-      @processes[name] = SiteMaps::Process.new(name, location, **kwargs, &block)
+      @processes[name] = SiteMaps::Process.new(name, location, kwargs, block)
+    end
+
+    def write(location, raw_data)
+      raise NotImplementedError
+    end
+
+    def maybe_inline_urlset?
+      @processes.size == 1 && @processes.first.last.static?
     end
   end
 end

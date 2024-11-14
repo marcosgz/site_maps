@@ -82,7 +82,7 @@ RSpec.describe SiteMaps::Runner do
       expect(queue = runner.instance_variable_get(:@execution)).to have_key(:posts)
       expect(queue[:posts]).to containing_exactly([
         an_instance_of(SiteMaps::Process),
-        { year: 2020, month: 1 }
+        {year: 2020, month: 1}
       ])
     end
 
@@ -92,8 +92,8 @@ RSpec.describe SiteMaps::Runner do
 
       queue = runner.instance_variable_get(:@execution)
       expect(queue[:posts]).to containing_exactly(
-        [an_instance_of(SiteMaps::Process), { year: 2020, month: 1 }],
-        [an_instance_of(SiteMaps::Process), { year: 2020, month: 2 }]
+        [an_instance_of(SiteMaps::Process), {year: 2020, month: 1}],
+        [an_instance_of(SiteMaps::Process), {year: 2020, month: 2}]
       )
     end
   end
@@ -134,25 +134,25 @@ RSpec.describe SiteMaps::Runner do
       }.not_to raise_error
       expect(queue = runner.instance_variable_get(:@execution)).to have_key(:posts)
       expect(queue[:posts]).to containing_exactly(
-        [an_instance_of(SiteMaps::Process), { year: 2020, month: 1 }]
+        [an_instance_of(SiteMaps::Process), {year: 2020, month: 1}]
       )
     end
   end
 
   describe "#run" do
     it "executes the processes" do
-      runner.enqueue_remaining
+      runner.enqueue(:default)
 
       queue = []
-      runner.instance_variable_get(:@execution).each do |_, items|
+      runner.instance_variable_get(:@execution).each do |_id, items|
         items.each do |process, kwargs|
-          allow(process).to receive(:call)
+          allow(process).to receive(:call).and_call_original
           queue << process
         end
       end
 
       expect { runner.run }.not_to raise_error
-      queue.each do |process|
+      queue.all? do |process|
         expect(process).to have_received(:call)
       end
     end

@@ -39,4 +39,19 @@ RSpec.describe SiteMaps::Sitemap::SitemapIndex do
       expect(sitemap_index.sitemaps.size).to eq(1)
     end
   end
+
+  describe "#empty?" do
+    it "returns true when there are no sitemaps" do
+      sitemap_index = described_class.new
+
+      expect(sitemap_index.empty?).to be(true)
+    end
+
+    it "returns false when there are sitemaps" do
+      sitemap_index = described_class.new
+      sitemap_index.add("https://example.com/sitemap.xml")
+
+      expect(sitemap_index.empty?).to be(false)
+    end
+  end
 end

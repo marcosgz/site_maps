@@ -15,7 +15,7 @@ RSpec.describe SiteMaps::Process do
     end
 
     it "uses the kwargs_template" do
-      process = described_class.new(:name, "/path/%{year}-%{month}", { year: 2020 }, nil)
+      process = described_class.new(:name, "/path/%{year}-%{month}", {year: 2020}, nil)
       expect(process.location(month: "01")).to eq("/path/2020-01")
     end
   end
@@ -27,7 +27,7 @@ RSpec.describe SiteMaps::Process do
     end
 
     it "returns false if there are dynamic kwargs" do
-      process = described_class.new(:name, "/path/%{year}-%{month}", { year: 2020 }, nil)
+      process = described_class.new(:name, "/path/%{year}-%{month}", {year: 2020}, nil)
       expect(process).not_to be_static
     end
   end
@@ -52,7 +52,7 @@ RSpec.describe SiteMaps::Process do
 
     it "calls the block with the builder and the kwargs" do
       block = ->(builder, kwargs) { builder.add("/path/#{kwargs[:year]}") }
-      process = described_class.new(:name, nil, { year: 2020 }, block)
+      process = described_class.new(:name, nil, {year: 2020}, block)
       process.call(builder, month: "01")
       expect(builder.urls).to eq(["/path/2020"])
     end

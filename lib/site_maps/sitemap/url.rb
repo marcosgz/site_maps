@@ -33,6 +33,12 @@ module SiteMaps::Sitemap
       attributes[key]
     end
 
+    def last_modified
+      return unless self[:lastmod].respond_to?(:strftime)
+
+      self[:lastmod]
+    end
+
     def to_xml
       return @to_xml if defined?(@to_xml)
 

@@ -77,6 +77,7 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     it "creates a process" do
       adapter.process { |*, **| raise("do not call") }
       expect(adapter.processes).to have_key(:default)
+      expect(adapter.processes[:default].block).to be_a(Proc)
     end
 
     it "raises an error if the process is already defined" do
@@ -90,7 +91,8 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
 
     it "creates a process with the given location" do
-      adapter.process(:posts, "posts/sitemap.xml") { |*, **| raise("do not call") }
+      adapter.process(:posts, "posts/sitemap.xml") { |*, **| ra se("do not call") }
+      expect(adapter.processes[:posts].block).to be_a(Proc)
       expect(adapter.processes[:posts].location).to eq("posts/sitemap.xml")
     end
 
@@ -98,6 +100,26 @@ RSpec.describe SiteMaps::Adapters::Adapter do
       adapter.process(:posts, "posts/%{year}/sitemap.xml", year: 2020) { |*, **| raise("do not call") }
       expect(adapter.processes[:posts].location).to eq("posts/2020/sitemap.xml")
       expect(adapter.processes[:posts].location(year: 2024)).to eq("posts/2024/sitemap.xml")
+    end
+  end
+
+  describe "#maybe_inline_urlset?" do
+    subject(:adapter) { described_class.new }
+
+    it "is false when there are multiple processes" do
+      adapter.process { |*, **| }
+      adapter.process(:posts) { |*, **| }
+      expect(adapter.send(:maybe_inline_urlset?)).to be(false)
+    end
+
+    it "is false when the process is not static" do
+      adapter.process(:dinamic, "posts/%{year}/sitemap.xml", year: 2020) { |*, **| }
+      expect(adapter.send(:maybe_inline_urlset?)).to be(false)
+    end
+
+    it "is true when there is a single static process" do
+      adapter.process { |*, **| }
+      expect(adapter.send(:maybe_inline_urlset?)).to be(true)
     end
   end
 end

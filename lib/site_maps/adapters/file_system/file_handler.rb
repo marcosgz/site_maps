@@ -8,7 +8,7 @@ class SiteMaps::Adapters::FileSystem::FileHandler
   end
 
   def existing_files
-    return [] unless config.sitemap_path.exist?
+    [] unless config.sitemap_path.exist?
   end
 
   def write(location, data)
@@ -19,8 +19,8 @@ class SiteMaps::Adapters::FileSystem::FileHandler
       raise SitemapError.new("The path #{dir} is not a directory")
     end
 
-    stream = open(location.path, "wb")
-    if location.path.to_s =~ /.gz$/
+    stream = File.open(location.path, "wb")
+    if /.gz$/.match?(location.path.to_s)
       gzip(stream, raw_data)
     else
       plain(stream, raw_data)

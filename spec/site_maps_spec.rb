@@ -12,7 +12,7 @@ RSpec.describe SiteMaps do
       adapter = described_class.use(:file_system, directory: "tmp")
       expect(adapter).to be_a(SiteMaps::Adapters::FileSystem)
       expect(adapter.config.directory).to eq("tmp")
-      expect(SiteMaps.current_adapter).to eq(adapter)
+      expect(described_class.current_adapter).to eq(adapter)
     end
 
     it "raises an error if the adapter is not found" do
@@ -59,7 +59,7 @@ RSpec.describe SiteMaps do
     end
 
     it "delegates to the current adapter" do
-      adapter = described_class.use(:file_system, directory: "tmp")
+      described_class.use(:file_system, directory: "tmp")
       expect(described_class.generate).to be_an_instance_of(SiteMaps::Runner)
     end
 

@@ -142,7 +142,7 @@ RSpec.describe SiteMaps::Configuration do
       it "returns the sitemap index urls" do
         expect(configuration.read_index_sitemaps).to contain_exactly(
           SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
-          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00"),
+          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
         )
       end
     end
@@ -181,7 +181,7 @@ RSpec.describe SiteMaps::Configuration do
 
         expect(configuration.read_index_sitemaps).to contain_exactly(
           SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
-          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00"),
+          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
         )
       end
     end

@@ -13,7 +13,7 @@ RSpec.describe SiteMaps::Adapters::FileSystem::Config do
     it "sets the provided values" do
       config = described_class.new(
         url: "https://example.com/sitemap.xml",
-        directory: "tmp",
+        directory: "tmp"
       )
 
       expect(config.url).to eq("https://example.com/sitemap.xml")
