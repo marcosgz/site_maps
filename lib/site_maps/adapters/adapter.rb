@@ -25,7 +25,7 @@ module SiteMaps::Adapters
     # @param [String] raw_data The raw data to write
     # @return [void]
     # @raise [SiteMaps::Error] if the write operation fails
-    def write(_url, _raw_data)
+    def write(_url, _raw_data, **_kwargs)
       raise NotImplementedError
     end
 

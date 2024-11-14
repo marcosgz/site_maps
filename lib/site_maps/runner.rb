@@ -68,7 +68,7 @@ module SiteMaps
     def finalize!
       unless adapter.sitemap_index.empty?
         raw_data = adapter.sitemap_index.to_xml
-        adapter.write(adapter.config.url, raw_data)
+        adapter.write(adapter.config.url, raw_data, last_modified: Time.now)
       end
     end
 

@@ -78,7 +78,7 @@ RSpec.describe SiteMaps::SitemapBuilder do
     end
   end
 
-  describe "#finalize!" do
+  describe "#finalize!", freeze_at: [2024, 6, 24, 12, 30, 55]  do
     subject(:builder) do
       described_class.new(adapter: adapter)
     end
@@ -132,7 +132,7 @@ RSpec.describe SiteMaps::SitemapBuilder do
 
         builder.finalize!
 
-        expect(adapter).to have_received(:write).with("https://example.com/sitemap.xml", anything)
+        expect(adapter).to have_received(:write).with("https://example.com/sitemap.xml", anything, last_modified: builder.send(:url_set).last_modified)
         expect(adapter.send(:sitemap_index).sitemaps.count).to eq(0)
         expect(builder.send(:url_set).links_count).to eq(1)
       end
@@ -164,7 +164,7 @@ RSpec.describe SiteMaps::SitemapBuilder do
 
         builder.finalize!
 
-        expect(adapter).to have_received(:write).with("https://example.com/sitemap1.xml", anything)
+        expect(adapter).to have_received(:write).with("https://example.com/sitemap1.xml", anything, last_modified: Time.now)
         expect(adapter.send(:sitemap_index).sitemaps.count).to eq(1)
         expect(builder.send(:url_set).links_count).to eq(2)
       end

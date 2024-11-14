@@ -31,10 +31,10 @@ module SiteMaps
       raw_data = url_set.finalize!
 
       if adapter.maybe_inline_urlset? && sitemap_index.empty?
-        adapter.write(location.main_url, raw_data)
+        adapter.write(location.main_url, raw_data, last_modified: url_set.last_modified)
       else
         sitemap_url = location.next.to_s
-        adapter.write(sitemap_url, raw_data)
+        adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
         add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
       end
     end
@@ -48,7 +48,7 @@ module SiteMaps
     def finalize_and_start_next_urlset!
       raw_data = url_set.finalize!
       sitemap_url = location.next.to_s
-      adapter.write(sitemap_url, raw_data)
+      adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
       add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
       @url_set = SiteMaps::Sitemap::URLSet.new
     end

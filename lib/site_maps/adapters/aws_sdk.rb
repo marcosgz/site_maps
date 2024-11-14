@@ -2,10 +2,10 @@
 
 module SiteMaps::Adapters
   class AwsSdk < Adapter
-    def write(url, raw_data, **metadata)
+    def write(url, raw_data, **options)
       location = Location.new(config.directory, url)
       local_storage.write(location, raw_data)
-      s3_storage.upload(location, **metadata)
+      s3_storage.upload(location, **options)
     end
 
     def read(url)

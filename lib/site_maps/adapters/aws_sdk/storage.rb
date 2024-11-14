@@ -14,12 +14,15 @@ class SiteMaps::Adapters::AwsSdk::Storage
   #   end
   # end
 
-  def upload(location, **metadata)
-    metadata[:acl] ||= config.acl if config.acl
-    metadata[:cache_control] ||= config.cache_control if config.cache_control
-    metadata[:content_type] ||= location.gzip? ? "application/gzip" : "application/xml"
+  def upload(location, **options)
+    options[:acl] ||= config.acl if config.acl
+    options[:cache_control] ||= config.cache_control if config.cache_control
+    options[:content_type] ||= location.gzip? ? "application/gzip" : "application/xml"
+    lastmod = options.delete(:last_modified) || Time.now
+    options[:metadata] ||= {}
+    options[:metadata]["given-last-modified"] = lastmod.utc.strftime("%Y-%m-%dT%H:%M:%S%:z")
     obj = object(location.remote_path)
-    obj.upload_file(location.path, **metadata)
+    obj.upload_file(location.path, **options)
   end
 
   def read(location)

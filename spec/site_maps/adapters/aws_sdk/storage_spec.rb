@@ -27,14 +27,17 @@ RSpec.describe SiteMaps::Adapters::AwsSdk::Storage do
     let(:location) { SiteMaps::Adapters::AwsSdk::Location.new("/tmp", "http://example.com/sitemaps/2024/sitemap1.xml") }
     let(:metadata) { {} }
 
-    it "uploads the file to S3" do
+    it "uploads the file to S3", freeze_at: [2024, 6, 24, 12, 30, 55] do
       obj = instance_double(Aws::S3::Object)
       expect(s3_bucket).to receive(:object).with("sitemaps/2024/sitemap1.xml").and_return(obj)
       expect(obj).to receive(:upload_file).with(
         "/tmp/sitemaps/2024/sitemap1.xml",
         acl: "public-read",
         cache_control: "max-age=3600",
-        content_type: "application/xml"
+        content_type: "application/xml",
+        metadata: {
+          "given-last-modified" => Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S%:z")
+        }
       )
 
       upload!

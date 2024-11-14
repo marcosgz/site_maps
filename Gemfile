@@ -8,6 +8,7 @@ gem "activesupport", "~> 6.0"
 gem "nokogiri"
 gem "webmock"
 gem "aws-sdk-s3"
+gem "timecop"
 
 # Specify your gem's dependencies in site_maps.gemspec
 gemspec
