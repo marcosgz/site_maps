@@ -18,7 +18,7 @@ class SiteMaps::Adapters::AwsSdk::Config < SiteMaps::Configuration
   end
 
   def s3_bucket
-    config.s3_resource.bucket(bucket)
+    s3_resource.bucket(bucket)
   end
 
   def s3_resource

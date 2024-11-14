@@ -27,7 +27,14 @@ class SiteMaps::Adapters::AwsSdk::Storage
 
   def read(location)
     obj = object(location.remote_path).get
-    [obj.body.read, {content_type: obj.content_type}]
+    metadata = {
+      content_type: obj.content_type,
+    }
+    if (raw = obj.metadata["given-last-modified"]) &&
+        (time = Time.parse(raw))
+      metadata[:last_modified] = time
+    end
+    [obj.body.read, metadata]
   rescue Aws::S3::Errors::NoSuchKey
     raise SiteMaps::FileNotFoundError, "File not found: #{location.remote_path}"
   end

@@ -10,12 +10,12 @@ module SiteMaps::Adapters
 
     def read(url)
       location = Location.new(config.directory, url)
-      s3_storage.read(location.remote_path)
+      s3_storage.read(location)
     end
 
     def delete(url)
       location = Location.new(config.directory, url)
-      s3_storage.delete(location.remote_path)
+      s3_storage.delete(location)
     end
 
     private
@@ -25,7 +25,7 @@ module SiteMaps::Adapters
     end
 
     def s3_storage
-      @s3_storage ||= Storage.new(config)
+      @s3_storage ||= SiteMaps::Adapters::AwsSdk::Storage.new(config)
     end
   end
 end

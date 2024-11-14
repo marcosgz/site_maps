@@ -34,8 +34,9 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
   end
 
   describe "#write" do
-    subject(:write!) { adapter.write(url, data) }
+    subject(:write!) { adapter.write(url, data, **metadata) }
 
+    let(:metadata) { { last_modified: Time.now } }
     let(:url) { "http://example.com/2024/sitemap-#{SecureRandom.hex(8)}.xml" }
     let(:data) { "<sitemap></sitemap>" }
     let(:location) { SiteMaps::Adapters::FileSystem::Location.new(adapter.config.directory, url) }
@@ -66,6 +67,26 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
       expect(read!).to eq([data, { content_type: "application/xml" }])
 
       expect(adapter.send(:storage)).to have_received(:read).with(location)
+    end
+  end
+
+  describe "#delete" do
+    subject(:delete!) { adapter.delete(url) }
+
+    let(:url) { "http://example.com/2024/sitemap-#{SecureRandom.hex(8)}.xml" }
+    let(:data) { "<sitemap></sitemap>" }
+    let(:location) { SiteMaps::Adapters::FileSystem::Location.new(adapter.config.directory, url) }
+
+    before do
+      adapter.write(url, data)
+    end
+
+    it "delegate to the storage" do
+      allow(adapter.send(:storage)).to receive(:delete).and_call_original
+
+      delete!
+
+      expect(adapter.send(:storage)).to have_received(:delete).with(location)
     end
   end
 end

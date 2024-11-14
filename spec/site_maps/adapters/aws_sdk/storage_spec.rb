@@ -49,7 +49,13 @@ RSpec.describe SiteMaps::Adapters::AwsSdk::Storage do
 
     let(:location) { SiteMaps::Adapters::AwsSdk::Location.new("/tmp", "http://example.com/sitemaps/2024/sitemap1.xml") }
     let(:obj) { instance_double(Aws::S3::Object) }
-    let(:body) { instance_double(Aws::S3::Types::GetObjectOutput, body: StringIO.new("<sitemap></sitemap>"), content_type: "application/xml") }
+    let(:body) do
+      instance_double(Aws::S3::Types::GetObjectOutput,
+        body: StringIO.new("<sitemap></sitemap>"),
+        content_type: "application/xml",
+        metadata: { "given-last-modified" => "2024-11-14T20:53:08+00:00" },
+      )
+    end
 
     before do
       allow(s3_bucket).to receive(:object).with("sitemaps/2024/sitemap1.xml").and_return(obj)
@@ -57,7 +63,13 @@ RSpec.describe SiteMaps::Adapters::AwsSdk::Storage do
     end
 
     it "reads the file from S3" do
-      expect(read!).to eq(["<sitemap></sitemap>", {content_type: "application/xml"}])
+      expect(read!).to eq([
+        "<sitemap></sitemap>",
+        {
+          content_type: "application/xml",
+          last_modified: Time.new(2024, 11, 14, 20, 53, 8, "+00:00")
+        }
+      ])
       expect(obj).to have_received(:get)
     end
 
