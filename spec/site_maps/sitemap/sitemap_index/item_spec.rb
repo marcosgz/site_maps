@@ -55,4 +55,18 @@ RSpec.describe SiteMaps::Sitemap::SitemapIndex::Item do
       expect(item.relative_path).to eq("sitemap/sitemap2.xml")
     end
   end
+
+  describe "#hash" do
+    it "returns the hash of the loc" do
+      item = described_class.new("https://example.com/sitemap.xml")
+      expect(item.hash).to eq("https://example.com/sitemap.xml".hash)
+    end
+
+    it "is the same for two items with the same loc" do
+      item1 = described_class.new("https://example.com/sitemap.xml", Date.new(2019, 1, 1))
+      item2 = described_class.new("https://example.com/sitemap.xml", Date.new(2019, 2, 2))
+
+      expect(item1.hash).to eq(item2.hash)
+    end
+  end
 end

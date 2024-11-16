@@ -33,8 +33,8 @@ RSpec.describe SiteMaps::Sitemap::SitemapIndex do
 
     it "does not add the same sitemap twice" do
       sitemap_index = described_class.new
-      sitemap_index.add("https://example.com/sitemap.xml")
-      sitemap_index.add("https://example.com/sitemap.xml")
+      sitemap_index.add("https://example.com/sitemap.xml", lastmod: Time.now - 1)
+      sitemap_index.add("https://example.com/sitemap.xml", lastmod: Time.now + 1)
 
       expect(sitemap_index.sitemaps.size).to eq(1)
     end

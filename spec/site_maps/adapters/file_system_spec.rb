@@ -14,18 +14,6 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
         s.add("/index.html")
         s.add("/about.html")
       end
-
-      categories = %w[news sports entertainment]
-
-      process(:categories) do |s|
-        categories.each do |category|
-          s.add("/#{category}.html")
-        end
-      end
-
-      process(:posts, "posts/%{year}/sitemap.xml", year: 2024) do |s, year:|
-        s.add("/posts/#{year}/index.html")
-      end
     end
   end
 
@@ -89,4 +77,100 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
       expect(adapter.send(:storage)).to have_received(:delete).with(location)
     end
   end
+
+  describe "#process" do
+    subject(:run!) { runner.run }
+
+    let(:runner) do
+      SiteMaps::Runner.new(adapter, max_threads: 4).enqueue_all
+    end
+
+    it "writes the sitemap with inline URLset" do
+      expect(adapter.maybe_inline_urlset?).to be(true)
+
+      expect {
+        run!
+      }.not_to change { adapter.sitemap_index.sitemaps.size }
+
+      sitemap_file = File.join(adapter.config.directory, "my-site/sitemap.xml")
+      expect(File.exist?(sitemap_file)).to be(true)
+      doc = Nokogiri::XML(File.read(sitemap_file))
+      expect(doc.css("urlset url").size).to eq(2)
+    end
+
+    context "when there are multiple processes" do
+      before do
+        adapter.process(:another) do |s|
+          s.add("/contact.html")
+        end
+      end
+
+      it "writes the sitemap file for each process and adds them to the sitemap index" do
+        expect(adapter.maybe_inline_urlset?).to be(false)
+
+        expect {
+          run!
+        }.to change { adapter.sitemap_index.sitemaps.size }.by(2)
+
+        index = File.join(adapter.config.directory, "my-site/sitemap.xml")
+        sitemap1 = File.join(adapter.config.directory, "my-site/sitemap1.xml")
+        sitemap2 = File.join(adapter.config.directory, "my-site/sitemap2.xml")
+        expect(File.exist?(index)).to be(true)
+        expect(File.exist?(sitemap1)).to be(true)
+        expect(File.exist?(sitemap2)).to be(true)
+
+        idx_doc = Nokogiri::XML(File.read(index))
+        doc1 = Nokogiri::XML(File.read(sitemap1))
+        doc2 = Nokogiri::XML(File.read(sitemap2))
+        expect(idx_doc.css("sitemapindex sitemap loc").map(&:text)).to contain_exactly(
+          "https://example.com/my-site/sitemap1.xml",
+          "https://example.com/my-site/sitemap2.xml",
+        )
+        expect(doc1.css("urlset url loc").map(&:text)).to contain_exactly(
+          "https://example.com/index.html",
+          "https://example.com/about.html",
+        )
+        expect(doc2.css("urlset url loc").map(&:text)).to contain_exactly(
+          "https://example.com/contact.html",
+        )
+      end
+    end
+
+
+  end
+
+  # describe "#process with a single process" do
+  #   let(:process) { adapter.processes[:default] }
+  #   let(:builder) do
+  #     SiteMaps::SitemapBuilder.new(
+  #       adapter: adapter,
+  #       location: process.location,
+  #     )
+  #   end
+
+  #   it "writes the sitemap with inline URLset" do
+  #     expect(adapter.maybe_inline_urlset?).to be(true)
+
+  #     expect {
+  #       process.call(builder)
+  #     }.not_to change { adapter.sitemap_index.sitemaps.size }
+
+  #     expect(builder.send(:url_set).links_count).to eq(2)
+  #     builder.finalize!
+
+  #     sitemap_file = File.join(adapter.config.directory, "my-site/sitemap.xml")
+  #     expect(File.exist?(sitemap_file)).to be(true)
+
+  #     doc = Nokogiri::XML(File.read(sitemap_file))
+  #     expect(doc.css("urlset url").size).to eq(2)
+  #   end
+  # end
+
+  # describe "#process with multiple processes" do
+  #   before do
+  #     adapter.process(:another) do |s|
+  #       s.add("/contact.html")
+  #     end
+  #   end
+  # end
 end

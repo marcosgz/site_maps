@@ -16,6 +16,7 @@ module SiteMaps::Sitemap
 
     def initialize
       @sitemaps = Concurrent::Set.new
+      # @children_locations = Concurrent::Hash.new
     end
 
     def add(loc, lastmod: nil)

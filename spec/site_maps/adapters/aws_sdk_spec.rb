@@ -14,18 +14,6 @@ RSpec.describe SiteMaps::Adapters::AwsSdk do
         s.add("/index.html")
         s.add("/about.html")
       end
-
-      categories = %w[news sports entertainment]
-
-      process(:categories) do |s|
-        categories.each do |category|
-          s.add("/#{category}.html")
-        end
-      end
-
-      process(:posts, "posts/%{year}/sitemap.xml", year: 2024) do |s, year:|
-        s.add("/posts/#{year}/index.html")
-      end
     end
   end
 

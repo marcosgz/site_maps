@@ -62,8 +62,16 @@ module SiteMaps
       @url || validate_url!
     end
 
-    def host
-      ::URI.parse(url).host
+    # def host
+    #   ::URI.parse(url).host
+    # end
+
+    def base_uri
+      ::URI.parse(url).tap do |uri|
+        uri.path = ""
+        uri.query = nil
+        uri.fragment = nil
+      end
     end
 
     def local_sitemap_path

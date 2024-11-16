@@ -7,7 +7,8 @@ module SiteMaps
     def initialize(adapter:, location: nil)
       @adapter = adapter
       @url_set = SiteMaps::Sitemap::URLSet.new
-      @location = IncrementalLocation.new(adapter.config.url, location)
+      @location = location
+      # @location = IncrementalLocation.new(adapter.config.url, location)
     end
 
     def add(path, params: nil, **options)
@@ -31,9 +32,9 @@ module SiteMaps
       raw_data = url_set.finalize!
 
       if adapter.maybe_inline_urlset? && sitemap_index.empty?
-        adapter.write(location.main_url, raw_data, last_modified: url_set.last_modified)
+        adapter.write(repo.main_url, raw_data, last_modified: url_set.last_modified)
       else
-        sitemap_url = location.next.to_s
+        sitemap_url = repo.generate_url(location)
         adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
         add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
       end
@@ -43,18 +44,18 @@ module SiteMaps
 
     attr_reader :url_set, :adapter, :location
 
-    def_delegators :adapter, :sitemap_index, :config
+    def_delegators :adapter, :sitemap_index, :config, :repo
 
     def finalize_and_start_next_urlset!
       raw_data = url_set.finalize!
-      sitemap_url = location.next.to_s
+      sitemap_url = repo.generate_url(location)
       adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
       add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
       @url_set = SiteMaps::Sitemap::URLSet.new
     end
 
     def build_link(path, params)
-      SiteMaps::Sitemap::Link.new(config.host, path, params)
+      SiteMaps::Sitemap::Link.new(config.base_uri, path, params)
     end
   end
 end

@@ -158,7 +158,7 @@ RSpec.describe SiteMaps::Runner do
     end
 
     it "interrupts the execution if a process fails" do
-      runner = described_class.new(adapter, max_threads: 1)
+      runner = described_class.new(adapter, max_threads: 2)
       adapter.process(:failure) do |s|
         raise ArgumentError, "Failure"
       end

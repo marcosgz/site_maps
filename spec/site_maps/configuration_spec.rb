@@ -100,19 +100,19 @@ RSpec.describe SiteMaps::Configuration do
     end
   end
 
-  describe "#host" do
-    it "returns the host from the url" do
-      configuration.url = "https://example.com/sitemap.xml"
-      expect(configuration.host).to eq("example.com")
-    end
+  # describe "#host" do
+  #   it "returns the host from the url" do
+  #     configuration.url = "https://example.com/sitemap.xml"
+  #     expect(configuration.host).to eq("example.com")
+  #   end
 
-    context "when the url is not set" do
-      it "raises an error" do
-        configuration.url = nil
-        expect { configuration.host }.to raise_error(SiteMaps::ConfigurationError)
-      end
-    end
-  end
+  #   context "when the url is not set" do
+  #     it "raises an error" do
+  #       configuration.url = nil
+  #       expect { configuration.host }.to raise_error(SiteMaps::ConfigurationError)
+  #     end
+  #   end
+  # end
 
   describe "#local_sitemap_path" do
     it "returns the local sitemap path" do
@@ -198,6 +198,14 @@ RSpec.describe SiteMaps::Configuration do
       config = described_class.new(url: "https://example.com/path/to/sitemap.xml")
 
       expect(config.remote_sitemap_directory).to eq("path/to")
+    end
+  end
+
+  describe "#base_uri" do
+    let(:config) { described_class.new(url: "https://example.com/sitemap.xml?foo=1#bar") }
+
+    it "returns the base url" do
+      expect(config.base_uri.to_s).to eq("https://example.com")
     end
   end
 end

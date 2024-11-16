@@ -24,7 +24,15 @@ RSpec.describe SiteMaps::SitemapBuilder do
     end
 
     it "sets the location" do
-      expect(builder.send(:location)).to be_a(SiteMaps::IncrementalLocation)
+      expect(builder.send(:location)).to eq(nil)
+    end
+
+    context "when the location is provided" do
+      let(:location) { "group/sitemap.xml" }
+
+      it "sets the location" do
+        expect(builder.send(:location)).to eq("group/sitemap.xml")
+      end
     end
   end
 

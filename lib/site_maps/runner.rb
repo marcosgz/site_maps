@@ -39,26 +39,39 @@ module SiteMaps
 
     def run
       may_preload_sitemap_index
-      @execution.each do |_process_name, items|
-        items.each do |process, kwargs|
-          Concurrent::Future.execute(executor: pool) do
-            wrap_process_execution(process) do
-              builder = SiteMaps::SitemapBuilder.new(
-                adapter: adapter,
-                location: process.location
-              )
-              process.call(builder, **kwargs)
-              builder.finalize!
+
+      if false && single_thread?
+        _process_name, items = @execution.first
+        process, kwargs = items.first
+        builder = SiteMaps::SitemapBuilder.new(
+          adapter: adapter,
+          location: process.location
+        )
+        process.call(builder, **kwargs)
+        builder.finalize!
+        finalize!
+      else
+        @execution.each do |_process_name, items|
+          items.each do |process, kwargs|
+            Concurrent::Future.execute(executor: pool) do
+              wrap_process_execution(process) do
+                builder = SiteMaps::SitemapBuilder.new(
+                  adapter: adapter,
+                  location: process.location
+                )
+                process.call(builder, **kwargs)
+                builder.finalize!
+              end
             end
           end
         end
+
+        pool.shutdown
+        pool.wait_for_termination
+        @execution.clear
+
+        failed.false? ? finalize! : fail_with_errors!
       end
-
-      pool.shutdown
-      pool.wait_for_termination
-      @execution.clear
-
-      failed.false? ? finalize! : fail_with_errors!
     end
 
     private
@@ -85,19 +98,7 @@ module SiteMaps
     def may_preload_sitemap_index
       return unless preload_sitemap_index_links?
 
-      process = SiteMaps::Process.new(
-        :read_index_sitemap,
-        nil,
-        nil,
-        ->(*) {}
-      )
-
-      # I'm not using a future here because I want to make sure
-      # the index file will be readed before any other process
-      # overwrites it
-      wrap_process_execution(process) do
-        process.call(nil)
-      end
+      # @todo: Implement preload_sitemap_index
     end
 
     def wrap_process_execution(process)
@@ -114,6 +115,12 @@ module SiteMaps
 
       (@adapter.processes.keys - @execution.keys).any? || # There are processes that have not been enqueued
         @execution.any? { |_, items| items.any? { |process, _| process.dynamic? } } # There are dynamic processes
+    end
+
+    def single_thread?
+      @pool.max_length == 1 || (
+        @execution.size == 1 && @execution.first.last.size == 1
+      )
     end
   end
 end

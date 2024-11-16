@@ -5,7 +5,7 @@ module SiteMaps::Sitemap
     attr_reader :uri
 
     def initialize(base_url, path, params = {})
-      @uri = ::URI.parse(base_url)
+      @uri = base_url.is_a?(::URI) ? base_url.dup : ::URI.parse(base_url)
       @uri.user, @uri.query = nil
       @uri.path = path
       @uri.query = Rack::Utils.unescape(Rack::Utils.build_nested_query(params)) if params.is_a?(Hash) && params.any?
@@ -19,5 +19,9 @@ module SiteMaps::Sitemap
       to_s == other.to_s
     end
     alias_method :==, :eql?
+
+    def hash
+      to_s.hash
+    end
   end
 end

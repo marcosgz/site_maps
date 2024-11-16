@@ -10,12 +10,11 @@ module SiteMaps::Adapters
       end
     end
 
-    attr_reader :sitemap_index, :processes
+    attr_reader :sitemap_index, :processes, :repo
 
     def initialize(**options, &block)
       @config = SiteMaps.config.becomes(self.class.config_class, **options)
       @sitemap_index = SiteMaps::Sitemap::SitemapIndex.new
-
       @processes = Concurrent::Hash.new
       instance_exec(&block) if block
     end
@@ -60,6 +59,10 @@ module SiteMaps::Adapters
 
     def maybe_inline_urlset?
       @processes.size == 1 && @processes.first.last.static?
+    end
+
+    def repo
+      @repo ||= SiteMaps::AtomicRepository.new(config.url)
     end
   end
 end

@@ -17,9 +17,9 @@ class SiteMaps::Sitemap::SitemapIndex::Item < Struct.new(:loc, :lastmod)
   end
   alias_method :==, :eql?
 
-  # def filename
-  #   File.basename(loc)
-  # end
+  def hash
+    loc.hash
+  end
 
   def relative_path
     return unless loc =~ %r{^https?://[^/]+(/.*)$}

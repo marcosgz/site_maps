@@ -3,12 +3,39 @@
 require "spec_helper"
 
 RSpec.describe SiteMaps::Adapters::Adapter do
-  let(:adapter_config) do
-    Class.new(SiteMaps::Configuration)
-  end
+  # let(:adapter_config) do
+  #   Class.new(SiteMaps::Configuration)
+  # end
+  # before do
+  #   stub_const("SiteMaps::Adapters::Adapter::Config", adapter_config)
+  # end
 
-  before do
-    stub_const("SiteMaps::Adapters::Adapter::Config", adapter_config)
+  describe ".config_class" do
+    subject(:config_class) { described_class.config_class }
+
+    let(:adapter_class) do
+      Class.new(described_class)
+    end
+
+    context "when the adapter has a Config class" do
+      let(:adapter_config) do
+        Class.new(SiteMaps::Configuration)
+      end
+
+      before do
+        stub_const("SiteMaps::Adapters::Adapter::Config", adapter_config)
+      end
+
+      it "returns the Config class" do
+        expect(adapter_class.config_class).to eq(adapter_config)
+      end
+    end
+
+    context "when the adapter does not have a Config class" do
+      it "returns the default configuration" do
+        expect(adapter_class.config_class).to eq(SiteMaps::Configuration)
+      end
+    end
   end
 
   describe "#initialize" do
@@ -120,6 +147,40 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     it "is true when there is a single static process" do
       adapter.process { |*, **| }
       expect(adapter.send(:maybe_inline_urlset?)).to be(true)
+    end
+  end
+
+  describe "#write" do
+    subject(:adapter) { described_class.new }
+
+    it "raises an error" do
+      expect { adapter.write("https://example.com/sitemap.xml", "") }.to raise_error(NotImplementedError)
+    end
+  end
+
+  describe "#read" do
+    subject(:adapter) { described_class.new }
+
+    it "raises an error" do
+      expect { adapter.read("https://example.com/sitemap.xml") }.to raise_error(NotImplementedError)
+    end
+  end
+
+  describe "#delete" do
+    subject(:adapter) { described_class.new }
+
+    it "raises an error" do
+      expect { adapter.delete("https://example.com/sitemap.xml") }.to raise_error(NotImplementedError)
+    end
+  end
+
+  describe "#repo" do
+    subject(:adapter) { described_class.new.tap { |a| a.config.url = "https://example.com/sitemap.xml" } }
+
+    it "returns the repository" do
+      expect(repo = adapter.repo).to be_a(SiteMaps::AtomicRepository)
+      expect(adapter.repo).to be(repo)
+      expect(adapter.repo.main_url).to eq("https://example.com/sitemap.xml")
     end
   end
 end

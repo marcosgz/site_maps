@@ -7,17 +7,16 @@ module SiteMaps
 
     def initialize(main_url, process_location)
       @main_uri = URI(main_url)
-      @process_url = normalize(process_location || @main_uri.to_s)
-      @index = 0
+      @index = Concurrent::AtomicFixnum.new(0)
+      normalize(process_location || @main_uri.to_s)
     end
 
-    def to_s(index: nil)
-      index ||= @index
-      process_url % {index: index}
+    def url
+      placeholder_url % {index: @index.value}
     end
 
     def next
-      @index += 1
+      @index.increment
       self
     end
 
@@ -25,9 +24,13 @@ module SiteMaps
       main_uri.to_s
     end
 
+    def relative_directory
+      File.dirname(@uri.path).sub(%r{^/}, "")
+    end
+
     private
 
-    attr_reader :main_uri, :process_url
+    attr_reader :main_uri, :placeholder_url
 
     def base_url
       main_uri.dup.tap { |uri| uri.path = "" }
@@ -48,13 +51,12 @@ module SiteMaps
       unless %w[.xml .xml.gz].include?(File.extname(uri.path))
         uri.path = File.join(uri.path, FILENAME)
       end
-      # Add placeholder to the basename
-      basename = File.basename(uri.path)
-      basename.sub!(/[\.](xml|xml\.gz)$/, "#{PLACEHOLDER}.\\1")
-
       base = uri.dup.tap { |v| v.path = "" }.to_s
+      basename = File.basename(uri.path)
+      index_basename = basename.sub(/[\.](xml|xml\.gz)$/, "#{PLACEHOLDER}.\\1")
 
-      File.join(base, File.join(File.dirname(uri.path), basename))
+      @placeholder_url = File.join(base, File.join(File.dirname(uri.path), index_basename))
+      @uri = URI(File.join(base, File.join(File.dirname(uri.path), basename)))
     end
   end
 end
