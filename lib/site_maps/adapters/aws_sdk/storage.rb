@@ -9,7 +9,7 @@ class SiteMaps::Adapters::AwsSdk::Storage
 
   # def existing_sitemap_indexes
   #   objs = list_objects(prefix: config.remote_sitemap_directory)
-  #   config.read_index_sitemaps.select do |item|
+  #   config.fetch_sitemap_index_links.select do |item|
   #     objs.any? { |obj| item.relative_path == obj.key }
   #   end
   # end

@@ -2,6 +2,8 @@
 
 module SiteMaps::Adapters
   class Adapter
+    extend Forwardable
+
     class << self
       def config_class
         return SiteMaps::Configuration unless defined?(self::Config)
@@ -10,6 +12,7 @@ module SiteMaps::Adapters
       end
     end
 
+    def_delegators :config, :fetch_sitemap_index_links
     attr_reader :sitemap_index, :processes, :repo
 
     def initialize(**options, &block)

@@ -100,20 +100,6 @@ RSpec.describe SiteMaps::Configuration do
     end
   end
 
-  # describe "#host" do
-  #   it "returns the host from the url" do
-  #     configuration.url = "https://example.com/sitemap.xml"
-  #     expect(configuration.host).to eq("example.com")
-  #   end
-
-  #   context "when the url is not set" do
-  #     it "raises an error" do
-  #       configuration.url = nil
-  #       expect { configuration.host }.to raise_error(SiteMaps::ConfigurationError)
-  #     end
-  #   end
-  # end
-
   describe "#local_sitemap_path" do
     it "returns the local sitemap path" do
       configuration.url = "https://example.com/sitemap.xml"
@@ -121,7 +107,7 @@ RSpec.describe SiteMaps::Configuration do
     end
   end
 
-  describe "#read_index_sitemaps" do
+  describe "#fetch_sitemap_index_links" do
     context "when the local sitemap file exists with a urlset" do
       before do
         configuration.directory = fixture_root
@@ -129,7 +115,7 @@ RSpec.describe SiteMaps::Configuration do
       end
 
       it "returns and empty array" do
-        expect(configuration.read_index_sitemaps).to eq([])
+        expect(configuration.fetch_sitemap_index_links).to eq([])
       end
     end
 
@@ -140,7 +126,7 @@ RSpec.describe SiteMaps::Configuration do
       end
 
       it "returns the sitemap index urls" do
-        expect(configuration.read_index_sitemaps).to contain_exactly(
+        expect(configuration.fetch_sitemap_index_links).to contain_exactly(
           SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
           SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
         )
@@ -155,7 +141,7 @@ RSpec.describe SiteMaps::Configuration do
 
       it "returns an empty array" do
         stub_request(:get, "https://example.com/missing-sitemap.xml").to_return(status: 404)
-        expect(configuration.read_index_sitemaps).to eq([])
+        expect(configuration.fetch_sitemap_index_links).to eq([])
       end
     end
 
@@ -167,7 +153,7 @@ RSpec.describe SiteMaps::Configuration do
       it "returns an empty array" do
         stub_request(:get, "https://example.com/sitemap.xml").to_return(body: fixture_file("sitemap.xml"))
 
-        expect(configuration.read_index_sitemaps).to eq([])
+        expect(configuration.fetch_sitemap_index_links).to eq([])
       end
     end
 
@@ -179,7 +165,7 @@ RSpec.describe SiteMaps::Configuration do
       it "returns the sitemap index urls" do
         stub_request(:get, "https://example.com/sitemap_index.xml").to_return(body: fixture_file("sitemap_index.xml"))
 
-        expect(configuration.read_index_sitemaps).to contain_exactly(
+        expect(configuration.fetch_sitemap_index_links).to contain_exactly(
           SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
           SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
         )

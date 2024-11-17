@@ -2,11 +2,11 @@
 
 module SiteMaps
   class AtomicRepository
-    attr_reader :main_url
+    attr_reader :main_url, :preloaded_index_links
 
     def initialize(main_url)
       @main_url = main_url
-      @preloaded_index_links = Concurrent::Hash.new
+      @preloaded_index_links = Concurrent::Array.new
       @generated_urls = Concurrent::Hash.new
     end
 

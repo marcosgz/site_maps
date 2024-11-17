@@ -62,10 +62,6 @@ module SiteMaps
       @url || validate_url!
     end
 
-    # def host
-    #   ::URI.parse(url).host
-    # end
-
     def base_uri
       ::URI.parse(url).tap do |uri|
         uri.path = ""
@@ -79,7 +75,7 @@ module SiteMaps
       Pathname.new(directory).join(filename)
     end
 
-    def read_index_sitemaps
+    def fetch_sitemap_index_links
       doc = SiteMaps::SitemapReader.new(local_sitemap_path.exist? ? local_sitemap_path : url).to_doc
 
       doc.css("sitemapindex sitemap").map do |url|

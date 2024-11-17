@@ -183,4 +183,17 @@ RSpec.describe SiteMaps::Adapters::Adapter do
       expect(adapter.repo.main_url).to eq("https://example.com/sitemap.xml")
     end
   end
+
+  describe "#fetch_sitemap_index_links" do
+    let(:adapter) { described_class.new.tap { |a| a.config.url = "https://example.com/sitemap.xml" } }
+
+    it "calls the method on the configuration" do
+      expect(adapter.config).to receive(:fetch_sitemap_index_links).and_return([
+        SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/sitemap1.xml", Time.now)
+      ])
+
+      expect((links = adapter.fetch_sitemap_index_links).size).to eq(1)
+      expect(links).to all(be_a(SiteMaps::Sitemap::SitemapIndex::Item))
+    end
+  end
 end
