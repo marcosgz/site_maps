@@ -86,6 +86,24 @@ SiteMaps.generate(config_file: "config/sitemap.rb")
   .run
 ```
 
+If you are using Rails, you may want to add routes to the sitemap builder. You can use the `include_module` adapter method.
+
+```ruby
+# config/sitemap.rb
+SiteMaps.use(:file_system) do
+  include_module Rails.application.routes.url_helpers # It's the same of `extend Rails.application.routes.url_helpers`
+
+  configure do |config|
+    config.url = "https://example.com/sitemaps/sitemap.xml.gz" # Location of main sitemap index file
+    config.directory = "/home/www/public"
+  end
+  process do |s|
+    s.add(root_path, priority: 1.0, changefreq: "daily")
+    s.add(about_path, priority: 0.9, changefreq: "weekly")
+  end
+end
+```
+
 ### AWS S3
 
 You can use the AWS S3 adapter to store the sitemaps in an S3 bucket. The configuration is similar to the file system adapter, but you need to provide the AWS SDK options.
