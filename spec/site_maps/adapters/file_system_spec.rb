@@ -24,7 +24,7 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
   describe "#write" do
     subject(:write!) { adapter.write(url, data, **metadata) }
 
-    let(:metadata) { { last_modified: Time.now } }
+    let(:metadata) { {last_modified: Time.now} }
     let(:url) { "http://example.com/2024/sitemap-#{SecureRandom.hex(8)}.xml" }
     let(:data) { "<sitemap></sitemap>" }
     let(:location) { SiteMaps::Adapters::FileSystem::Location.new(adapter.config.directory, url) }
@@ -52,7 +52,7 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
     it "delegate to the storage" do
       allow(adapter.send(:storage)).to receive(:read).and_call_original
 
-      expect(read!).to eq([data, { content_type: "application/xml" }])
+      expect(read!).to eq([data, {content_type: "application/xml"}])
 
       expect(adapter.send(:storage)).to have_received(:read).with(location)
     end
@@ -124,14 +124,14 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
         doc2 = Nokogiri::XML(File.read(sitemap2))
         expect(idx_doc.css("sitemapindex sitemap loc").map(&:text)).to contain_exactly(
           "https://example.com/my-site/sitemap1.xml",
-          "https://example.com/my-site/sitemap2.xml",
+          "https://example.com/my-site/sitemap2.xml"
         )
         expect([
           doc1.css("urlset url loc").map(&:text),
-          doc2.css("urlset url loc").map(&:text),
+          doc2.css("urlset url loc").map(&:text)
         ]).to contain_exactly(
           contain_exactly("https://example.com/index.html", "https://example.com/about.html"),
-          contain_exactly("https://example.com/contact.html"),
+          contain_exactly("https://example.com/contact.html")
         )
       end
     end
@@ -163,14 +163,14 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
         dinamic_doc1 = Nokogiri::XML(File.read(dinamic1))
         expect(idx_doc.css("sitemapindex sitemap loc").map(&:text)).to contain_exactly(
           "https://example.com/my-site/sitemap1.xml",
-          "https://example.com/my-site/posts/2024/sitemap1.xml",
+          "https://example.com/my-site/posts/2024/sitemap1.xml"
         )
         expect([
           doc1.css("urlset url loc").map(&:text),
-          dinamic_doc1.css("urlset url loc").map(&:text),
+          dinamic_doc1.css("urlset url loc").map(&:text)
         ]).to contain_exactly(
           contain_exactly("https://example.com/index.html", "https://example.com/about.html"),
-          contain_exactly("https://example.com/posts/2024/headline.html"),
+          contain_exactly("https://example.com/posts/2024/headline.html")
         )
       end
     end

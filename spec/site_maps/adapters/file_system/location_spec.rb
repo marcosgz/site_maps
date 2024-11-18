@@ -30,12 +30,12 @@ RSpec.describe SiteMaps::Adapters::FileSystem::Location do
   describe "#gzip?" do
     it "returns true when the path ends with .gz" do
       location = described_class.new("/app/root/public", "http://example.com/sitemaps/2024/sitemap1.xml.gz")
-      expect(location.gzip?).to eq(true)
+      expect(location.gzip?).to be(true)
     end
 
     it "returns false when the path does not end with .gz" do
       location = described_class.new("/app/root/public", "http://example.com/sitemaps/2024/sitemap1.xml")
-      expect(location.gzip?).to eq(false)
+      expect(location.gzip?).to be(false)
     end
   end
 end

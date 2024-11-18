@@ -57,7 +57,7 @@ module SiteMaps
               wrap_process_execution(process) do
                 builder = SiteMaps::SitemapBuilder.new(
                   adapter: adapter,
-                  location: process.location
+                  location: process.location(**kwargs)
                 )
                 process.call(builder, **kwargs)
                 builder.finalize!

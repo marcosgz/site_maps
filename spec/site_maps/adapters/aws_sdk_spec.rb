@@ -30,7 +30,7 @@ RSpec.describe SiteMaps::Adapters::AwsSdk do
     it "delegate to the storage" do
       metadata = {
         content_type: "application/xml",
-        last_modified: Time.now,
+        last_modified: Time.now
       }
       expect(adapter.send(:s3_storage)).to receive(:read).with(
         an_instance_of(SiteMaps::Adapters::AwsSdk::Location)
@@ -46,7 +46,7 @@ RSpec.describe SiteMaps::Adapters::AwsSdk do
   describe "#write" do
     subject(:write!) { adapter.write(url, data, **metadata) }
 
-    let(:metadata) { { last_modified: Time.now } }
+    let(:metadata) { {last_modified: Time.now} }
     let(:url) { "http://example.com/2024/sitemap-#{SecureRandom.hex(8)}.xml" }
     let(:data) { "<sitemap></sitemap>" }
 

@@ -62,7 +62,7 @@ RSpec.describe SiteMaps::Adapters::FileSystem::Storage do
       end
 
       it "reads the data from the location" do
-        expect(read!).to eq([data, { content_type: "application/xml" }])
+        expect(read!).to eq([data, {content_type: "application/xml"}])
       end
     end
 
@@ -74,7 +74,7 @@ RSpec.describe SiteMaps::Adapters::FileSystem::Storage do
       end
 
       it "reads the data from the location" do
-        expect(read!).to eq([data, { content_type: "application/gzip" }])
+        expect(read!).to eq([data, {content_type: "application/gzip"}])
       end
     end
 

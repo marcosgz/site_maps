@@ -53,8 +53,7 @@ RSpec.describe SiteMaps::Adapters::AwsSdk::Storage do
       instance_double(Aws::S3::Types::GetObjectOutput,
         body: StringIO.new("<sitemap></sitemap>"),
         content_type: "application/xml",
-        metadata: { "given-last-modified" => "2024-11-14T20:53:08+00:00" },
-      )
+        metadata: {"given-last-modified" => "2024-11-14T20:53:08+00:00"})
     end
 
     before do

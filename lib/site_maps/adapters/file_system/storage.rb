@@ -27,9 +27,9 @@ class SiteMaps::Adapters::FileSystem::Storage
   # @raise [SiteMaps::FileNotFoundError] if the file does not exist
   def read(location)
     if location.gzip?
-      [Zlib::GzipReader.open(location.path).read, { content_type: "application/gzip" }]
+      [Zlib::GzipReader.open(location.path).read, {content_type: "application/gzip"}]
     else
-      [File.read(location.path), { content_type: "application/xml" }]
+      [File.read(location.path), {content_type: "application/xml"}]
     end
   rescue Zlib::GzipFile::Error
     raise SiteMaps::FileNotFoundError.new("File not found: #{location.path}")

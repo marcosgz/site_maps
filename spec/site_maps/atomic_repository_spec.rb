@@ -19,7 +19,7 @@ RSpec.describe SiteMaps::AtomicRepository do
   describe "#generate_url" do
     it "thread-safely generate a new URL" do
       arr = Concurrent::Array.new
-      threads = 4.times.map do
+      threads = Array.new(4) do
         Thread.new do
           arr.push(repository.generate_url("https://example.com/my-site/group/sitemap.xml"))
         end
@@ -33,7 +33,7 @@ RSpec.describe SiteMaps::AtomicRepository do
         "https://example.com/my-site/group/sitemap1.xml",
         "https://example.com/my-site/group/sitemap2.xml",
         "https://example.com/my-site/group/sitemap3.xml",
-        "https://example.com/my-site/group/sitemap4.xml",
+        "https://example.com/my-site/group/sitemap4.xml"
       )
       expect(other_loc).to eq("https://example.com/my-site/2024/sitemap1.xml")
     end
@@ -66,7 +66,7 @@ RSpec.describe SiteMaps::AtomicRepository do
       it "returns the preloaded index links" do
         expect(repository.remaining_index_links.map(&:loc)).to contain_exactly(
           "https://example.com/my-site/group/sitemap1.xml"
-          )
+        )
       end
     end
 

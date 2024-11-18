@@ -21,7 +21,7 @@ class SiteMaps::Adapters::AwsSdk::Storage
   def read(location)
     obj = object(location.remote_path).get
     metadata = {
-      content_type: obj.content_type,
+      content_type: obj.content_type
     }
     if (raw = obj.metadata["given-last-modified"]) &&
         (time = Time.parse(raw))

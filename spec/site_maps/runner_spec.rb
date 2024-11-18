@@ -47,7 +47,7 @@ RSpec.describe SiteMaps::Runner do
       adapter.sitemap_index.add("https://example.com/site/sitemap1.xml")
       adapter.repo.generate_url("https://example.com/site/group/sitemap1.xml")
 
-      runner = described_class.new(adapter, max_threads: 2)
+      described_class.new(adapter, max_threads: 2)
       expect(adapter.sitemap_index).to be_empty
       expect(adapter.instance_variable_get(:@repo)).to be_nil
       expect(adapter.repo.preloaded_index_links).to be_empty
@@ -167,12 +167,12 @@ RSpec.describe SiteMaps::Runner do
       end
     end
 
-    context "when running a partial execution", freeze_at: [2024, 6, 24, 12, 30, 55]  do
+    context "when running a partial execution", freeze_at: [2024, 6, 24, 12, 30, 55] do
       it "preload sitemap index links" do
         runner.enqueue(:default)
         expect(runner.send(:preload_sitemap_index_links?)).to be(true)
         expect(adapter).to receive(:fetch_sitemap_index_links).and_return([
-          item = SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/site/posts/2024-5/sitemap.xml", Time.new(2024, 5)),
+          item = SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/site/posts/2024-5/sitemap.xml", Time.new(2024, 5))
         ])
 
         runner.run
@@ -223,6 +223,41 @@ RSpec.describe SiteMaps::Runner do
 
         expect(failure).to have_received(:call)
         expect(default).not_to have_received(:call)
+      end
+    end
+
+    context "when running dynamic processes with different arguments" do
+      let(:adapter) do
+        SiteMaps.use(:noop) do
+          config.url = "https://example.com/sitemap.xml"
+          process(:posts, "posts/%{year}/sitemap.xml", year: 2024) do |s, year:|
+            s.add("/posts/#{year}/index.html")
+          end
+        end
+      end
+
+      it "executes each process with the provided arguments" do
+        runner.enqueue(:posts, year: 2020)
+        runner.enqueue(:posts, year: 2021)
+        runner.enqueue(:posts, year: 2022)
+
+        process = adapter.processes[:posts]
+        allow(process).to receive(:call).and_call_original
+
+        expect { runner.run }.not_to raise_error
+
+        expect(process).to have_received(:call).with(
+          an_instance_of(SiteMaps::SitemapBuilder),
+          year: 2020
+        )
+        expect(process).to have_received(:call).with(
+          an_instance_of(SiteMaps::SitemapBuilder),
+          year: 2021
+        )
+        expect(process).to have_received(:call).with(
+          an_instance_of(SiteMaps::SitemapBuilder),
+          year: 2022
+        )
       end
     end
   end

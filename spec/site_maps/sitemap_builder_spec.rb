@@ -24,7 +24,7 @@ RSpec.describe SiteMaps::SitemapBuilder do
     end
 
     it "sets the location" do
-      expect(builder.send(:location)).to eq(nil)
+      expect(builder.send(:location)).to be_nil
     end
 
     context "when the location is provided" do
@@ -86,7 +86,7 @@ RSpec.describe SiteMaps::SitemapBuilder do
     end
   end
 
-  describe "#finalize!", freeze_at: [2024, 6, 24, 12, 30, 55]  do
+  describe "#finalize!", freeze_at: [2024, 6, 24, 12, 30, 55] do
     subject(:builder) do
       described_class.new(adapter: adapter)
     end
