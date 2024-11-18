@@ -157,27 +157,121 @@ RSpec.describe SiteMaps::Runner do
       end
     end
 
-    it "interrupts the execution if a process fails" do
-      runner = described_class.new(adapter, max_threads: 2)
-      adapter.process(:failure) do |s|
-        raise ArgumentError, "Failure"
+    context "when running a partial execution", freeze_at: [2024, 6, 24, 12, 30, 55]  do
+      it "preload sitemap index links" do
+        runner.enqueue(:default)
+        expect(runner.send(:preload_sitemap_index_links?)).to be(true)
+        expect(adapter).to receive(:fetch_sitemap_index_links).and_return([
+          item = SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/site/posts/2024-5/sitemap.xml", Time.new(2024, 5)),
+        ])
+
+        runner.run
+
+        expect(adapter.repo.preloaded_index_links).to contain_exactly(
+          item
+        )
+        expect(adapter.sitemap_index.sitemaps.map(&:loc)).to contain_exactly(
+          "https://example.com/site/sitemap1.xml",
+          "https://example.com/site/posts/2024-5/sitemap.xml"
+        )
       end
-      runner.enqueue(:failure)
-      runner.enqueue(:default)
-      execution = runner.instance_variable_get(:@execution)
+    end
 
-      failure = execution[:failure].first.first
-      default = execution[:default].first.first
-      allow(failure).to receive(:call).and_call_original
-      allow(default).to receive(:call).and_call_original
+    context "when some of process fails" do
+      let(:adapter) do
+        SiteMaps.use(:noop) do
+          config.url = "https://example.com/sitemap.xml"
+          process do |s|
+            s.add("/index.html")
+          end
+          process(:await) do |s|
+            sleep 0.1
+            s.add("/await.html")
+          end
+          process(:failure) do
+            raise ArgumentError, "Failure"
+          end
+        end
+      end
 
-      expect { runner.run }.to raise_error(SiteMaps::RunnerError).with_message(<<~MSG)
-        Errors occurred while processing sitemap:
-          * Process[failure] error: Failure
-      MSG
+      it "interrupts the execution when a process fails" do
+        runner = described_class.new(adapter, max_threads: 2)
+        runner.enqueue(:failure)
+        runner.enqueue(:await)
+        runner.enqueue(:default)
+        execution = runner.instance_variable_get(:@execution)
 
-      expect(failure).to have_received(:call)
-      expect(default).not_to have_received(:call)
+        failure = execution[:failure].first.first
+        default = execution[:default].first.first
+        allow(failure).to receive(:call).and_call_original
+        allow(default).to receive(:call).and_call_original
+
+        expect { runner.run }.to raise_error(SiteMaps::RunnerError).with_message(<<~MSG)
+          Errors occurred while processing sitemap:
+            * Process[failure] error: Failure
+        MSG
+
+        expect(failure).to have_received(:call)
+        expect(default).not_to have_received(:call)
+      end
+    end
+  end
+
+  describe "#preload_sitemap_index_links?" do
+    subject(:preload_links?) { runner.send(:preload_sitemap_index_links?) }
+
+    context "when the runner execution is empty" do
+      it "returns false" do
+        expect(runner.instance_variable_get(:@execution)).to be_empty
+        expect(preload_links?).to be(false)
+      end
+    end
+
+    context "when the adapter only have static processes" do
+      let(:adapter) do
+        SiteMaps.use(:noop) do
+          config.url = "https://example.com/sitemap.xml"
+          process { |s| s.add("/index.html") }
+          process(:news) { |s| s.add("/news.html") }
+        end
+      end
+
+      it "returns false when all the processes are enqueued" do
+        runner.enqueue_all
+
+        expect(preload_links?).to be(false)
+      end
+
+      it "returns true when not all the processes are enqueued" do
+        runner.enqueue(:news)
+
+        expect(preload_links?).to be(true)
+      end
+    end
+
+    context "when the adapter only have dynamic processes" do
+      let(:adapter) do
+        SiteMaps.use(:noop) do
+          config.url = "https://example.com/sitemap.xml"
+          process { |s| s.add("/index.html") }
+          process(:posts, "posts/%{year}/sitemap.xml", year: 2024) do |s, year:|
+            s.add("/posts/#{year}/index.html")
+          end
+        end
+      end
+
+      it "returns true even when all the processes are enqueued" do
+        runner.enqueue(:default)
+        runner.enqueue(:posts, year: 2024)
+
+        expect(preload_links?).to be(true)
+      end
+
+      it "returns true when not all the processes are enqueued" do
+        runner.enqueue(:default)
+
+        expect(preload_links?).to be(true)
+      end
     end
   end
 end

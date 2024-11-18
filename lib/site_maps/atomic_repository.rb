@@ -14,5 +14,11 @@ module SiteMaps
       location = IncrementalLocation.new(main_url, raw_location)
       (@generated_urls[location.relative_directory] ||= location).next.url
     end
+
+    def remaining_index_links
+      preloaded_index_links.reject do |link|
+        @generated_urls.key?(link.relative_directory)
+      end
+    end
   end
 end

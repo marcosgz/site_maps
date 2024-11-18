@@ -141,6 +141,7 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
         adapter.process(:year_posts, "posts/%{year}/sitemap.xml", year: 2024) do |s, year:|
           s.add("/posts/#{year}/headline.html")
         end
+        expect(adapter).to receive(:fetch_sitemap_index_links).and_return([])
       end
 
       it "writes the sitemap file for each process and adds them to the sitemap index" do

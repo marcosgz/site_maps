@@ -7,5 +7,12 @@ module SiteMaps::Adapters
 
     def read(_url)
     end
+
+    def delete(_url)
+    end
+
+    def fetch_sitemap_index_links
+      []
+    end
   end
 end

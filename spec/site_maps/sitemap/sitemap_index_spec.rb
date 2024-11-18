@@ -38,6 +38,14 @@ RSpec.describe SiteMaps::Sitemap::SitemapIndex do
 
       expect(sitemap_index.sitemaps.size).to eq(1)
     end
+
+    it "allows adding a sitemap item" do
+      sitemap_index = described_class.new
+      sitemap_index.add(item = SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/sitemap.xml"))
+
+      expect(sitemap_index.sitemaps.size).to eq(1)
+      expect(sitemap_index.sitemaps.first).to be(item)
+    end
   end
 
   describe "#empty?" do

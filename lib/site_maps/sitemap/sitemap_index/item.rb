@@ -21,10 +21,10 @@ class SiteMaps::Sitemap::SitemapIndex::Item < Struct.new(:loc, :lastmod)
     loc.hash
   end
 
-  def relative_path
+  def relative_directory
     return unless loc =~ %r{^https?://[^/]+(/.*)$}
 
-    val = Regexp.last_match(1)
+    val = File.dirname(Regexp.last_match(1))
     val = val[1..-1] if val.start_with?("/")
     val
   end

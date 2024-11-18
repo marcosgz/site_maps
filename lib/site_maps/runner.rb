@@ -79,6 +79,9 @@ module SiteMaps
     attr_reader :pool, :failed, :errors
 
     def finalize!
+      adapter.repo.remaining_index_links.each do |item|
+        adapter.sitemap_index.add(item)
+      end
       unless adapter.sitemap_index.empty?
         raw_data = adapter.sitemap_index.to_xml
         adapter.write(adapter.config.url, raw_data, last_modified: Time.now)
@@ -98,7 +101,9 @@ module SiteMaps
     def may_preload_sitemap_index
       return unless preload_sitemap_index_links?
 
-      # @todo: Implement preload_sitemap_index
+      adapter.fetch_sitemap_index_links.each do |item|
+        adapter.repo.preloaded_index_links.push(item)
+      end
     end
 
     def wrap_process_execution(process)
@@ -114,7 +119,7 @@ module SiteMaps
       return false if @execution.empty?
 
       (@adapter.processes.keys - @execution.keys).any? || # There are processes that have not been enqueued
-        @execution.any? { |_, items| items.any? { |process, _| process.dynamic? } } # There are dynamic processes
+        @adapter.processes.any? { |_, process| process.dynamic? } # There are dynamic processes
     end
 
     def single_thread?

@@ -7,13 +7,6 @@ class SiteMaps::Adapters::AwsSdk::Storage
     @config = config
   end
 
-  # def existing_sitemap_indexes
-  #   objs = list_objects(prefix: config.remote_sitemap_directory)
-  #   config.fetch_sitemap_index_links.select do |item|
-  #     objs.any? { |obj| item.relative_path == obj.key }
-  #   end
-  # end
-
   def upload(location, **options)
     options[:acl] ||= config.acl if config.acl
     options[:cache_control] ||= config.cache_control if config.cache_control

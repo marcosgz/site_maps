@@ -20,7 +20,7 @@ module SiteMaps::Sitemap
     end
 
     def add(loc, lastmod: nil)
-      sitemap = Item.new(loc, lastmod)
+      sitemap = loc.is_a?(Item) ? loc : Item.new(loc, lastmod)
       @sitemaps.add(sitemap)
     end
 
