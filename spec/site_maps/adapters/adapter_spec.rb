@@ -196,4 +196,20 @@ RSpec.describe SiteMaps::Adapters::Adapter do
       expect(links).to all(be_a(SiteMaps::Sitemap::SitemapIndex::Item))
     end
   end
+
+  describe "#include_module" do
+    let(:adapter) { described_class.new }
+    let(:mod) do
+      Module.new do
+        def foo
+          "foo"
+        end
+      end
+    end
+
+    it "includes the module" do
+      adapter.include_module(mod)
+      expect(adapter).to respond_to(:foo)
+    end
+  end
 end

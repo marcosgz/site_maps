@@ -67,5 +67,9 @@ module SiteMaps::Adapters
     def repo
       @repo ||= SiteMaps::AtomicRepository.new(config.url)
     end
+
+    def include_module(mod)
+      extend(mod)
+    end
   end
 end
