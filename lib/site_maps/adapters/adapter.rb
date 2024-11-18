@@ -17,8 +17,8 @@ module SiteMaps::Adapters
 
     def initialize(**options, &block)
       @config = SiteMaps.config.becomes(self.class.config_class, **options)
-      @sitemap_index = SiteMaps::Sitemap::SitemapIndex.new
       @processes = Concurrent::Hash.new
+      reset!
       instance_exec(&block) if block
     end
 
@@ -70,6 +70,11 @@ module SiteMaps::Adapters
 
     def include_module(mod)
       extend(mod)
+    end
+
+    def reset!
+      @sitemap_index = SiteMaps::Sitemap::SitemapIndex.new
+      @repo = nil
     end
   end
 end

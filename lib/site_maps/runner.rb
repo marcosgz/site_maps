@@ -5,7 +5,7 @@ module SiteMaps
     attr_reader :adapter
 
     def initialize(adapter = SiteMaps.current_adapter, max_threads: 4)
-      @adapter = adapter
+      @adapter = adapter.tap(&:reset!)
       @pool = Concurrent::FixedThreadPool.new(max_threads)
       @execution = Concurrent::Hash.new
       @failed = Concurrent::AtomicBoolean.new(false)

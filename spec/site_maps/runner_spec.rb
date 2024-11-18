@@ -42,6 +42,16 @@ RSpec.describe SiteMaps::Runner do
     it "initializes the execution" do
       expect(runner.instance_variable_get(:@execution)).to be_a(Concurrent::Hash)
     end
+
+    it "resets the adapter running state" do
+      adapter.sitemap_index.add("https://example.com/site/sitemap1.xml")
+      adapter.repo.generate_url("https://example.com/site/group/sitemap1.xml")
+
+      runner = described_class.new(adapter, max_threads: 2)
+      expect(adapter.sitemap_index).to be_empty
+      expect(adapter.instance_variable_get(:@repo)).to be_nil
+      expect(adapter.repo.preloaded_index_links).to be_empty
+    end
   end
 
   describe "#enqueue" do
