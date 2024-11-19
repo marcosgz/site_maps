@@ -91,7 +91,7 @@ module SiteMaps
     def fail_with_errors!
       return if errors.empty?
 
-      raise SiteMaps::RunnerError.new(errors)
+      raise errors.first.last
     end
 
     def handle_process_error(process, error)

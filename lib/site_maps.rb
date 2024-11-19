@@ -41,14 +41,6 @@ module SiteMaps
   FileNotFoundError = Class.new(Error)
   FullSitemapError = Class.new(Error)
   ConfigurationError = Class.new(Error)
-  RunnerError = Class.new(Error) do
-    def initialize(processes_and_errors)
-      super(<<~MSG)
-        Errors occurred while processing sitemap:
-          * #{processes_and_errors.map { |process, error| "Process[#{process.name}] error: #{error.message}" }.join("\n")}
-      MSG
-    end
-  end
 
   class << self
     attr_reader :current_adapter

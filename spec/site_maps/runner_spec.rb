@@ -216,10 +216,7 @@ RSpec.describe SiteMaps::Runner do
         allow(failure).to receive(:call).and_call_original
         allow(default).to receive(:call).and_call_original
 
-        expect { runner.run }.to raise_error(SiteMaps::RunnerError).with_message(<<~MSG)
-          Errors occurred while processing sitemap:
-            * Process[failure] error: Failure
-        MSG
+        expect { runner.run }.to raise_error(ArgumentError).with_message("Failure")
 
         expect(failure).to have_received(:call)
         expect(default).not_to have_received(:call)
