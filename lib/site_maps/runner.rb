@@ -17,6 +17,7 @@ module SiteMaps
       process = @adapter.processes.fetch(process_name) do
         raise ArgumentError, "Process :#{process_name} not found"
       end
+      kwargs = process.keyword_arguments(kwargs)
       SiteMaps::Notification.instrument('sitemaps.runner.execute') do |payload|
         payload[:process] = process
         payload[:kwargs] = kwargs

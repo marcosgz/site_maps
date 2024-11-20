@@ -147,7 +147,7 @@ RSpec.describe SiteMaps::Runner do
 
       queue = runner.instance_variable_get(:@execution)
       expect(queue[:posts]).to containing_exactly(
-        [an_instance_of(SiteMaps::Process), {}]
+        [an_instance_of(SiteMaps::Process), {year: 2024, month: nil}]
       )
     end
 

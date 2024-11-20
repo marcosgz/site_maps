@@ -22,8 +22,6 @@ module SiteMaps
       kwargs_template.is_a?(Hash) && kwargs_template.any?
     end
 
-    private
-
     def keyword_arguments(given)
       (kwargs_template || {}).merge(given || {})
     end
