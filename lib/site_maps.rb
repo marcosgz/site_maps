@@ -19,10 +19,12 @@ require "zlib"
 loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
 loader.ignore("#{__dir__}/site-maps.rb")
 loader.ignore("#{__dir__}/site_maps/tasks.rb")
-loader.inflector.inflect "xml" => "XML"
-loader.inflector.inflect "url" => "URL"
+loader.ignore("#{__dir__}/site_maps/cli.rb")
+loader.inflector.inflect "cli" => "CLI"
 loader.inflector.inflect "dsl" => "DSL"
 loader.inflector.inflect "url_set" => "URLSet"
+loader.inflector.inflect "url" => "URL"
+loader.inflector.inflect "xml" => "XML"
 loader.log! if ENV["DEBUG_ZEITWERK"]
 loader.setup
 
