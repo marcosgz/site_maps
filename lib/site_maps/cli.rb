@@ -13,6 +13,8 @@ module SiteMaps
     default_command :start
 
     def generate(processes = "")
+      load_rails if rails_app?
+
       opts = (@options || {}).transform_keys(&:to_sym)
       if (logfile = opts.delete(:logfile))
         SiteMaps.logger = Logger.new(logfile)
@@ -45,5 +47,17 @@ module SiteMaps
     end
 
     default_task :help
+
+    private
+
+    def rails_app?
+      File.exist?(File.join(Dir.pwd, 'config', 'application.rb'))
+    end
+
+    def load_rails
+      require File.expand_path(File.join(Dir.pwd, 'config', 'application.rb'))
+
+      Rails.application.require_environment!
+    end
   end
 end
