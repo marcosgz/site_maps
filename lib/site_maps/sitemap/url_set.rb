@@ -33,6 +33,8 @@ module SiteMaps::Sitemap
     end
 
     def add(link, **options)
+      raise SiteMaps::FullSitemapError if finalized?
+
       url = SiteMaps::Sitemap::URL.new(link, **options)
       raise SiteMaps::FullSitemapError unless fit?(url)
 

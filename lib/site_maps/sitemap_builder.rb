@@ -13,8 +13,8 @@ module SiteMaps
 
     def add(path, params: nil, **options)
       @mutex.synchronize do
-        link = build_link(path, params)
         begin
+          link = build_link(path, params)
           url_set.add(link, **options)
         rescue SiteMaps::FullSitemapError
           finalize_and_start_next_urlset!
