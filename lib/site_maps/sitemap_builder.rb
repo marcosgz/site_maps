@@ -8,15 +8,18 @@ module SiteMaps
       @adapter = adapter
       @url_set = SiteMaps::Sitemap::URLSet.new
       @location = location
+      @mutex = Mutex.new
     end
 
     def add(path, params: nil, **options)
-      link = build_link(path, params)
-      begin
-        url_set.add(link, **options)
-      rescue SiteMaps::FullSitemapError
-        finalize_and_start_next_urlset!
-        url_set.add(link, **options)
+      @mutex.synchronize do
+        link = build_link(path, params)
+        begin
+          url_set.add(link, **options)
+        rescue SiteMaps::FullSitemapError
+          finalize_and_start_next_urlset!
+          url_set.add(link, **options)
+        end
       end
     end
 
