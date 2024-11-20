@@ -48,8 +48,14 @@ module SiteMaps
       links_count = event[:links_count]
       news_count = event[:news_count]
       url = event[:url]
+      text = String.new("[%<runtime>s] Finalize URLSet with ")
+      text << "%<links>d links" if links_count > 0
+      text << " and " if links_count > 0 && news_count > 0
+      text << "%<news>d news" if news_count > 0
+      text << " URLs at %<url>s"
+
       print_message(
-        "[%<runtime>s] Finalize URLSet with %<links>d links and %<news>d news URLs at %<url>s",
+        text,
         links: links_count,
         news: news_count,
         url: colorize(url, :lightgray),
