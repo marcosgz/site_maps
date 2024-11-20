@@ -130,6 +130,32 @@ SiteMaps.use(:aws_sdk, **aws_sdk_options) do
 end
 ```
 
+
+## Notification
+
+You can subscribe to the internal events to receive notifications about the sitemap generation. The following events are available:
+
+* `sitemaps.runner.enqueue` - Triggered when a process is enqueued.
+* `sitemaps.runner.execute` - Triggered when a process starts.
+* `sitemaps.builder.finalize_urlset` - Triggered when the sitemap builder finishes the URL set.
+
+You can subscribe to the events using the following code:
+
+```ruby
+SiteMaps::Notification.subscribe("sitemaps.runner.enqueue") do |event|
+  puts "Enqueueing process #{event.payload[:name]}"
+end
+```
+
+We have the standard event handler `SiteMaps::Runner::EventListener` that will print the events to the standard output. You can use it to view the progress of the sitemap generation.
+
+```ruby
+SiteMaps::Notification.subscribe(SiteMaps::Runner::EventListener)
+SiteMaps.generate(config_file: "config/sitemap.rb")
+  .enqueue_all
+  .run
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.

@@ -14,15 +14,24 @@ module SiteMaps
 
     def enqueue(process_name = :default, **kwargs)
       process_name = process_name.to_sym
-      process = @adapter.processes.fetch(process_name)
-      if process.dynamic?
-        @execution[process_name] ||= Concurrent::Array.new
-        @execution[process_name] << [process, kwargs]
-      else
-        if @execution.key?(process_name)
-          raise ArgumentError, "Process #{process_name} already defined"
+      process = @adapter.processes.fetch(process_name) do
+        raise ArgumentError, "Process :#{process_name} not found"
+      end
+      SiteMaps::Notification.instrument('sitemaps.runner.execute') do |payload|
+        payload[:process] = process
+        payload[:kwargs] = kwargs
+        if process.dynamic?
+          @execution[process_name] ||= Concurrent::Array.new
+          if @execution[process_name].any? { |_, k| k == kwargs }
+            raise ArgumentError, "Process :#{process_name} already enqueued with kwargs #{kwargs}"
+          end
+          @execution[process_name] << [process, kwargs]
+        else
+          if @execution.key?(process_name)
+            raise ArgumentError, "Process :#{process_name} already defined"
+          end
+          @execution[process_name] = Concurrent::Array.new([[process, kwargs]])
         end
-        @execution[process_name] = Concurrent::Array.new([[process, kwargs]])
       end
       self
     end
@@ -55,12 +64,16 @@ module SiteMaps
           items.each do |process, kwargs|
             Concurrent::Future.execute(executor: pool) do
               wrap_process_execution(process) do
-                builder = SiteMaps::SitemapBuilder.new(
-                  adapter: adapter,
-                  location: process.location(**kwargs)
-                )
-                process.call(builder, **kwargs)
-                builder.finalize!
+                SiteMaps::Notification.instrument('sitemaps.runner.process') do |payload|
+                  payload[:process] = process
+                  payload[:kwargs] = kwargs
+                  builder = SiteMaps::SitemapBuilder.new(
+                    adapter: adapter,
+                    location: process.location(**kwargs)
+                  )
+                  process.call(builder, **kwargs)
+                  builder.finalize!
+                end
               end
             end
           end

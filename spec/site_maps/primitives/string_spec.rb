@@ -38,4 +38,56 @@ RSpec.describe SiteMaps::Primitives::String do
       end
     end
   end
+
+  describe "#underscore" do
+    subject { described_class.new(arg).underscore }
+
+    context "with capitalized string" do
+      let(:arg) { "User" }
+
+      it { is_expected.to eq("user") }
+    end
+
+    context "with camelized string" do
+      let(:arg) { "UserName" }
+
+      it { is_expected.to eq("user_name") }
+    end
+
+    context "with parameterized string" do
+      let(:arg) { "foo-bar" }
+
+      it { is_expected.to eq("foo_bar") }
+    end
+
+    context "with camelized string under a namespace" do
+      let(:arg) { "Apiv2::UserName" }
+
+      it { is_expected.to eq("apiv2/user_name") }
+    end
+
+    context "with camelized string with a root namespace" do
+      let(:arg) { "::UserName" }
+
+      it { is_expected.to eq("user_name") }
+    end
+
+    context "with a dot in the string" do
+      let(:arg) { "user.name" }
+
+      it { is_expected.to eq("user_name") }
+    end
+
+    context "with a space in the string" do
+      let(:arg) { "user name" }
+
+      it { is_expected.to eq("user_name") }
+    end
+
+    context "with multiple underscores in the string" do
+      let(:arg) { "user_______name" }
+
+      it { is_expected.to eq("user_name") }
+    end
+  end
 end

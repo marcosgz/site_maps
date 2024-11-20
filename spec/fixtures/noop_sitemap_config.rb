@@ -11,7 +11,7 @@ SiteMaps.use(:noop) do
 
   categories = %w[news sports entertainment]
 
-  process(:categories) do |s|
+  process(:categories, "categories/sitemap.xml") do |s|
     categories.each do |category|
       s.add("/#{category}.html")
     end

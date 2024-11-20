@@ -8,7 +8,6 @@ module SiteMaps
       @adapter = adapter
       @url_set = SiteMaps::Sitemap::URLSet.new
       @location = location
-      # @location = IncrementalLocation.new(adapter.config.url, location)
     end
 
     def add(path, params: nil, **options)
@@ -31,12 +30,20 @@ module SiteMaps
 
       raw_data = url_set.finalize!
 
-      if adapter.maybe_inline_urlset? && sitemap_index.empty?
-        adapter.write(repo.main_url, raw_data, last_modified: url_set.last_modified)
-      else
-        sitemap_url = repo.generate_url(location)
-        adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
-        add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
+      SiteMaps::Notification.instrument('sitemaps.builder.finalize_urlset') do |payload|
+        payload[:links_count] = url_set.links_count
+        payload[:news_count] = url_set.news_count
+        payload[:last_modified] = url_set.last_modified
+
+        if adapter.maybe_inline_urlset? && sitemap_index.empty?
+          payload[:url] = repo.main_url
+          adapter.write(repo.main_url, raw_data, last_modified: url_set.last_modified)
+        else
+          sitemap_url = repo.generate_url(location)
+          payload[:url] = sitemap_url
+          adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
+          add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
+        end
       end
     end
 
@@ -48,9 +55,15 @@ module SiteMaps
 
     def finalize_and_start_next_urlset!
       raw_data = url_set.finalize!
-      sitemap_url = repo.generate_url(location)
-      adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
-      add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
+      SiteMaps::Notification.instrument('sitemaps.builder.finalize_urlset') do |payload|
+        sitemap_url = repo.generate_url(location)
+        payload[:url] = sitemap_url
+        payload[:links_count] = url_set.links_count
+        payload[:news_count] = url_set.news_count
+        payload[:last_modified] = url_set.last_modified
+        adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
+        add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
+      end
       @url_set = SiteMaps::Sitemap::URLSet.new
     end
 

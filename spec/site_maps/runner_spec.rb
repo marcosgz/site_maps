@@ -54,7 +54,14 @@ RSpec.describe SiteMaps::Runner do
     end
   end
 
-  describe "#enqueue" do
+  describe "#enqueue", events: %w[sitemaps.runner.execute] do
+    it "raises an error when the process is not found" do
+      expect {
+        runner.enqueue(:unknown)
+      }.to raise_error(ArgumentError, "Process :unknown not found")
+      refute_event "sitemaps.runner.execute"
+    end
+
     it "adds the default process when no process name is provided" do
       result = runner.enqueue
 
@@ -64,6 +71,7 @@ RSpec.describe SiteMaps::Runner do
         an_instance_of(SiteMaps::Process),
         {}
       ])
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:default], kwargs: {}
     end
 
     it "adds the process to the execution" do
@@ -75,6 +83,7 @@ RSpec.describe SiteMaps::Runner do
         an_instance_of(SiteMaps::Process),
         {}
       ])
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:categories], kwargs: {}
     end
 
     it "does not add the process to the execution if static process is already defined" do
@@ -94,6 +103,7 @@ RSpec.describe SiteMaps::Runner do
         an_instance_of(SiteMaps::Process),
         {year: 2020, month: 1}
       ])
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:posts], kwargs: {year: 2020, month: 1}
     end
 
     it "adds multiple dynamic processes to the execution" do
@@ -105,10 +115,12 @@ RSpec.describe SiteMaps::Runner do
         [an_instance_of(SiteMaps::Process), {year: 2020, month: 1}],
         [an_instance_of(SiteMaps::Process), {year: 2020, month: 2}]
       )
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:posts], kwargs: {year: 2020, month: 1}
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:posts], kwargs: {year: 2020, month: 2}
     end
   end
 
-  describe "#enqueue_remaining" do
+  describe "#enqueue_remaining", events: %w[sitemaps.runner.execute] do
     it "adds all processes to the execution" do
       runner.enqueue_remaining
 
@@ -116,6 +128,9 @@ RSpec.describe SiteMaps::Runner do
       expect(queue).to have_key(:default)
       expect(queue).to have_key(:categories)
       expect(queue).to have_key(:posts)
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:default], kwargs: {}
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:categories], kwargs: {}
+      assert_event "sitemaps.runner.execute", process: adapter.processes[:posts], kwargs: {}
     end
 
     it "does not add the process to the execution if static process is already defined" do
@@ -149,7 +164,7 @@ RSpec.describe SiteMaps::Runner do
     end
   end
 
-  describe "#run" do
+  describe "#run", events: %w[sitemaps.runner.process] do
     it "executes the processes" do
       runner.enqueue(:default)
 
@@ -164,6 +179,7 @@ RSpec.describe SiteMaps::Runner do
       expect { runner.run }.not_to raise_error
       queue.all? do |process|
         expect(process).to have_received(:call)
+        assert_event "sitemaps.runner.process", process: process, kwargs: {}
       end
     end
 
@@ -220,6 +236,8 @@ RSpec.describe SiteMaps::Runner do
 
         expect(failure).to have_received(:call)
         expect(default).not_to have_received(:call)
+        refute_event "sitemaps.runner.process", process: failure, kwargs: {}
+        refute_event "sitemaps.runner.process", process: default, kwargs: {}
       end
     end
 
