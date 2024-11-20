@@ -50,42 +50,32 @@ module SiteMaps
     def run
       may_preload_sitemap_index
 
-      if false && single_thread?
-        _process_name, items = @execution.first
-        process, kwargs = items.first
-        builder = SiteMaps::SitemapBuilder.new(
-          adapter: adapter,
-          location: process.location
-        )
-        process.call(builder, **kwargs)
-        builder.finalize!
-        finalize!
-      else
-        @execution.each do |_process_name, items|
-          items.each do |process, kwargs|
-            Concurrent::Future.execute(executor: pool) do
-              wrap_process_execution(process) do
-                SiteMaps::Notification.instrument('sitemaps.runner.process') do |payload|
-                  payload[:process] = process
-                  payload[:kwargs] = kwargs
-                  builder = SiteMaps::SitemapBuilder.new(
-                    adapter: adapter,
-                    location: process.location(**kwargs)
-                  )
-                  process.call(builder, **kwargs)
-                  builder.finalize!
-                end
+      futures = []
+      @execution.each do |_process_name, items|
+        items.each do |process, kwargs|
+          futures << Concurrent::Future.execute(executor: pool) do
+            wrap_process_execution(process) do
+              SiteMaps::Notification.instrument('sitemaps.runner.process') do |payload|
+                payload[:process] = process
+                payload[:kwargs] = kwargs
+                builder = SiteMaps::SitemapBuilder.new(
+                  adapter: adapter,
+                  location: process.location(**kwargs)
+                )
+                process.call(builder, **kwargs)
+                builder.finalize!
               end
             end
           end
         end
-
-        pool.shutdown
-        pool.wait_for_termination
-        @execution.clear
-
-        failed.false? ? finalize! : fail_with_errors!
       end
+
+      futures.each(&:wait)
+      failed.false? ? finalize! : fail_with_errors!
+    ensure
+      pool.shutdown
+      pool.wait_for_termination
+      @execution.clear
     end
 
     private
@@ -136,10 +126,10 @@ module SiteMaps
         @adapter.processes.any? { |_, process| process.dynamic? } # There are dynamic processes
     end
 
-    def single_thread?
-      @pool.max_length == 1 || (
-        @execution.size == 1 && @execution.first.last.size == 1
-      )
-    end
+    # def single_thread?
+    #   @pool.max_length == 1 || (
+    #     @execution.size == 1 && @execution.first.last.size == 1
+    #   )
+    # end
   end
 end
