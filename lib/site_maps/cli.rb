@@ -43,5 +43,7 @@ module SiteMaps
     def version
       puts "SiteMaps version: #{SiteMaps::VERSION}"
     end
+
+    default_task :help
   end
 end

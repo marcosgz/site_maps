@@ -130,6 +130,19 @@ SiteMaps.use(:aws_sdk, **aws_sdk_options) do
 end
 ```
 
+## CLI
+
+You can use the CLI to generate the sitemap. The CLI will load the configuration file and run the sitemap generation.
+
+```bash
+bundle exec site_maps generate --config-file config/sitemap.rb
+```
+
+To enqueue dynamic processes, you can pass the process name with the context values.
+
+```bash
+bundle exec site_maps generate monthly_posts --config-file config/sitemap.rb --context=year:2021,month:1
+```
 
 ## Notification
 
