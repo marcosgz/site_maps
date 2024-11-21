@@ -23,7 +23,7 @@ module SiteMaps
         location: colorize(location, :lightgray)
       )
       if kwargs.any?
-        print_message("--> Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
+        print_message("└── Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
       end
     end
 
@@ -37,7 +37,7 @@ module SiteMaps
         location: colorize(location, :lightgray)
       )
       if kwargs.any?
-        print_message("--> Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
+        print_message("└── Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
       end
     end
 
@@ -52,7 +52,7 @@ module SiteMaps
         runtime: formatted_runtime(event[:runtime])
       )
       if kwargs.any?
-        print_message("--> Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
+        print_message("└── Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
       end
     end
 

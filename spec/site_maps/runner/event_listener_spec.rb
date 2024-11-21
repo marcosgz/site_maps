@@ -73,7 +73,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
           Enqueue process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
-          --> Keyword Arguments: {year: 2024, month: 11}
+          └── Keyword Arguments: {year: 2024, month: 11}
         MSG
       end
     end
@@ -123,7 +123,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
           Executing process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
-          --> Keyword Arguments: {year: 2024, month: 11}
+          └── Keyword Arguments: {year: 2024, month: 11}
         MSG
       end
     end
@@ -176,7 +176,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
           [#{formatted_runtime(1.32)}] Executed process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
-          --> Keyword Arguments: {year: 2024, month: 11}
+          └── Keyword Arguments: {year: 2024, month: 11}
         MSG
       end
     end
