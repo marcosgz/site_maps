@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Sitemap::Normalizer do
+RSpec.describe SiteMaps::Builder::Normalizer do
   describe ".w3c_date" do
     it "converts dates and times to W3C format" do
       expect(described_class.w3c_date(Date.new(0))).to eq("0000-01-01")

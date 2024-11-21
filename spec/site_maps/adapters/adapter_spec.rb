@@ -44,7 +44,7 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
 
     it "has a sitemap_index" do
-      expect(adapter.sitemap_index).to be_a(SiteMaps::Sitemap::SitemapIndex)
+      expect(adapter.sitemap_index).to be_a(SiteMaps::Builder::SitemapIndex)
     end
 
     context "when initialized with options" do
@@ -189,11 +189,11 @@ RSpec.describe SiteMaps::Adapters::Adapter do
 
     it "calls the method on the configuration" do
       expect(adapter.config).to receive(:fetch_sitemap_index_links).and_return([
-        SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/sitemap1.xml", Time.now)
+        SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/sitemap1.xml", Time.now)
       ])
 
       expect((links = adapter.fetch_sitemap_index_links).size).to eq(1)
-      expect(links).to all(be_a(SiteMaps::Sitemap::SitemapIndex::Item))
+      expect(links).to all(be_a(SiteMaps::Builder::SitemapIndex::Item))
     end
   end
 

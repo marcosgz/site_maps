@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SiteMaps::Sitemap
+module SiteMaps::Builder
   class URLSet
     SCHEMAS = {
       "image" => "http://www.google.com/schemas/sitemap-image/1.1",
@@ -35,7 +35,7 @@ module SiteMaps::Sitemap
     def add(link, **options)
       raise SiteMaps::FullSitemapError if finalized?
 
-      url = SiteMaps::Sitemap::URL.new(link, **options)
+      url = SiteMaps::Builder::URL.new(link, **options)
       raise SiteMaps::FullSitemapError unless fit?(url)
 
       content.puts(url.to_xml)

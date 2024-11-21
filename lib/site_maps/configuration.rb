@@ -79,7 +79,7 @@ module SiteMaps
       doc = SiteMaps::SitemapReader.new(local_sitemap_path.exist? ? local_sitemap_path : url).to_doc
 
       doc.css("sitemapindex sitemap").map do |url|
-        SiteMaps::Sitemap::SitemapIndex::Item.new(
+        SiteMaps::Builder::SitemapIndex::Item.new(
           url.at_css("loc").text,
           url.at_css("lastmod")&.text
         )

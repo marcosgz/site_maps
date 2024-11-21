@@ -188,7 +188,7 @@ RSpec.describe SiteMaps::Runner do
         runner.enqueue(:default)
         expect(runner.send(:preload_sitemap_index_links?)).to be(true)
         expect(adapter).to receive(:fetch_sitemap_index_links).and_return([
-          item = SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/site/posts/2024-5/sitemap.xml", Time.new(2024, 5))
+          item = SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/site/posts/2024-5/sitemap.xml", Time.new(2024, 5))
         ])
 
         runner.run

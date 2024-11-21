@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Sitemap::URLSet do
+RSpec.describe SiteMaps::Builder::URLSet do
   describe "SCHEMAS" do
     it "contains the expected schemas" do
       expect(described_class::SCHEMAS).to eq(

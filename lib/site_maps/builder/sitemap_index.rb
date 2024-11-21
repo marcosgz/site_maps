@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SiteMaps::Sitemap
+module SiteMaps::Builder
   class SitemapIndex
     HEADER = <<~HEADER
       <?xml version="1.0" encoding="UTF-8"?>

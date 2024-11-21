@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class SiteMaps::Sitemap::SitemapIndex::Item < Struct.new(:loc, :lastmod)
+class SiteMaps::Builder::SitemapIndex::Item < Struct.new(:loc, :lastmod)
   extend Forwardable
 
   def to_xml
@@ -31,5 +31,5 @@ class SiteMaps::Sitemap::SitemapIndex::Item < Struct.new(:loc, :lastmod)
 
   protected
 
-  def_delegator SiteMaps::Sitemap::Normalizer, :w3c_date
+  def_delegator SiteMaps::Builder::Normalizer, :w3c_date
 end

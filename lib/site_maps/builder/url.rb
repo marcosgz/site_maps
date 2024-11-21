@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SiteMaps::Sitemap
+module SiteMaps::Builder
   class URL
     extend Forwardable
 
@@ -144,9 +144,9 @@ module SiteMaps::Sitemap
 
     private
 
-    def_delegator SiteMaps::Sitemap::Normalizer, :format_float
-    def_delegator SiteMaps::Sitemap::Normalizer, :yes_or_no
-    def_delegator SiteMaps::Sitemap::Normalizer, :yes_or_no_with_default
-    def_delegator SiteMaps::Sitemap::Normalizer, :w3c_date
+    def_delegator SiteMaps::Builder::Normalizer, :format_float
+    def_delegator SiteMaps::Builder::Normalizer, :yes_or_no
+    def_delegator SiteMaps::Builder::Normalizer, :yes_or_no_with_default
+    def_delegator SiteMaps::Builder::Normalizer, :w3c_date
   end
 end

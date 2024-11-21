@@ -59,7 +59,7 @@ RSpec.describe SiteMaps::AtomicRepository do
     context "when there are preloaded index links but none have been generated" do
       before do
         repository.preloaded_index_links.push(
-          SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/my-site/group/sitemap1.xml")
+          SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/group/sitemap1.xml")
         )
       end
 
@@ -73,10 +73,10 @@ RSpec.describe SiteMaps::AtomicRepository do
     context "when there are preloaded index links and some have been generated" do
       before do
         repository.preloaded_index_links.push(
-          SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/my-site/group/sitemap1.xml"),
-          SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/my-site/group/sitemap2.xml"),
-          SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/my-site/sitemap1.xml"),
-          SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/sitemap1.xml")
+          SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/group/sitemap1.xml"),
+          SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/group/sitemap2.xml"),
+          SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/sitemap1.xml"),
+          SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/sitemap1.xml")
         )
         repository.generate_url("https://example.com/my-site/group/sitemap.xml")
       end

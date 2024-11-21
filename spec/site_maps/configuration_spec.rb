@@ -127,8 +127,8 @@ RSpec.describe SiteMaps::Configuration do
 
       it "returns the sitemap index urls" do
         expect(configuration.fetch_sitemap_index_links).to contain_exactly(
-          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
-          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
+          SiteMaps::Builder::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
+          SiteMaps::Builder::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
         )
       end
     end
@@ -166,8 +166,8 @@ RSpec.describe SiteMaps::Configuration do
         stub_request(:get, "https://example.com/sitemap_index.xml").to_return(body: fixture_file("sitemap_index.xml"))
 
         expect(configuration.fetch_sitemap_index_links).to contain_exactly(
-          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
-          SiteMaps::Sitemap::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
+          SiteMaps::Builder::SitemapIndex::Item.new("http://example.com/sitemap1.xml.gz", "2024-07-01T03:37:09-05:00"),
+          SiteMaps::Builder::SitemapIndex::Item.new("http://example.com/sitemap2.xml.gz", "2024-07-01T03:37:10-05:00")
         )
       end
     end

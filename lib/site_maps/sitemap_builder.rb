@@ -6,7 +6,7 @@ module SiteMaps
 
     def initialize(adapter:, location: nil)
       @adapter = adapter
-      @url_set = SiteMaps::Sitemap::URLSet.new
+      @url_set = SiteMaps::Builder::URLSet.new
       @location = location
       @mutex = Mutex.new
     end
@@ -67,11 +67,11 @@ module SiteMaps
         adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
         add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
       end
-      @url_set = SiteMaps::Sitemap::URLSet.new
+      @url_set = SiteMaps::Builder::URLSet.new
     end
 
     def build_link(path, params)
-      SiteMaps::Sitemap::Link.new(config.base_uri, path, params)
+      SiteMaps::Builder::Link.new(config.base_uri, path, params)
     end
   end
 end

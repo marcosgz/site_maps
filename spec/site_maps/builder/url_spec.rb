@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Sitemap::URL do
+RSpec.describe SiteMaps::Builder::URL do
   let(:link) { "http://example.com/posts.html" }
   let(:attributes) { {} }
   let(:instance) { described_class.new(link, **attributes) }
@@ -59,9 +59,9 @@ RSpec.describe SiteMaps::Sitemap::URL do
   describe "#to_xml" do
     let(:doc) do
       Nokogiri::XML([
-        SiteMaps::Sitemap::URLSet::HEADER,
+        SiteMaps::Builder::URLSet::HEADER,
         instance.to_xml,
-        SiteMaps::Sitemap::URLSet::FOOTER
+        SiteMaps::Builder::URLSet::FOOTER
       ].join("\n"))
     end
 

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Sitemap::SitemapIndex do
+RSpec.describe SiteMaps::Builder::SitemapIndex do
   describe "#to_xml" do
     it "returns the XML representation" do
       sitemap_index = described_class.new
@@ -41,7 +41,7 @@ RSpec.describe SiteMaps::Sitemap::SitemapIndex do
 
     it "allows adding a sitemap item" do
       sitemap_index = described_class.new
-      sitemap_index.add(item = SiteMaps::Sitemap::SitemapIndex::Item.new("https://example.com/sitemap.xml"))
+      sitemap_index.add(item = SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/sitemap.xml"))
 
       expect(sitemap_index.sitemaps.size).to eq(1)
       expect(sitemap_index.sitemaps.first).to be(item)

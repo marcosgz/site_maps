@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Sitemap::SitemapIndex::Item do
+RSpec.describe SiteMaps::Builder::SitemapIndex::Item do
   describe "#to_xml" do
     it "returns the XML representation" do
       item = described_class.new("https://example.com/sitemap.xml", Date.new(2019, 1, 1))

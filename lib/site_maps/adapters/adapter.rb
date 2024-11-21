@@ -73,7 +73,7 @@ module SiteMaps::Adapters
     end
 
     def reset!
-      @sitemap_index = SiteMaps::Sitemap::SitemapIndex.new
+      @sitemap_index = SiteMaps::Builder::SitemapIndex.new
       @repo = nil
     end
   end

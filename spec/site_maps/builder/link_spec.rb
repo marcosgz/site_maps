@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Sitemap::Link do
+RSpec.describe SiteMaps::Builder::Link do
   describe "#initialize" do
     subject(:link) do
       described_class.new("http://example.com", "/path", foo: :bar)

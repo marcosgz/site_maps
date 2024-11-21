@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SiteMaps::Sitemap
+module SiteMaps::Builder
   class Link
     attr_reader :uri
 

@@ -20,7 +20,7 @@ RSpec.describe SiteMaps::SitemapBuilder do
     end
 
     it "sets the url_set" do
-      expect(builder.send(:url_set)).to be_a(SiteMaps::Sitemap::URLSet)
+      expect(builder.send(:url_set)).to be_a(SiteMaps::Builder::URLSet)
     end
 
     it "sets the location" do
