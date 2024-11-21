@@ -18,7 +18,7 @@ module SiteMaps
         raise ArgumentError, "Process :#{process_name} not found"
       end
       kwargs = process.keyword_arguments(kwargs)
-      SiteMaps::Notification.instrument("sitemaps.runner.enqueue_process") do |payload|
+      SiteMaps::Notification.instrument("sitemaps.enqueue_process") do |payload|
         payload[:process] = process
         payload[:kwargs] = kwargs
         if process.dynamic?
@@ -53,15 +53,16 @@ module SiteMaps
       futures = []
       @execution.each do |_process_name, items|
         items.each do |process, kwargs|
-          SiteMaps::Notification.publish("sitemaps.runner.before_process_execution", process: process, kwargs: kwargs)
+          SiteMaps::Notification.publish("sitemaps.before_process_execution", process: process, kwargs: kwargs)
           futures << Concurrent::Future.execute(executor: pool) do
             wrap_process_execution(process) do
-              SiteMaps::Notification.instrument("sitemaps.runner.process_execution") do |payload|
+              SiteMaps::Notification.instrument("sitemaps.process_execution") do |payload|
                 payload[:process] = process
                 payload[:kwargs] = kwargs
                 builder = SiteMaps::SitemapBuilder.new(
                   adapter: adapter,
-                  location: process.location(**kwargs)
+                  location: process.location(**kwargs),
+                  notification_payload: { process: process }
                 )
                 process.call(builder, **kwargs)
                 builder.finalize!

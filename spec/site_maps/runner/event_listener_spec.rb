@@ -18,7 +18,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
   describe ".[]" do
     it "returns event method" do
-      expect(described_class["sitemaps.runner.enqueue_process"]).to eq(described_class.method(:on_sitemaps_runner_enqueue_process))
+      expect(described_class["sitemaps.enqueue_process"]).to eq(described_class.method(:on_sitemaps_enqueue_process))
     end
 
     it "returns nil when listener does not implement the event method" do
@@ -26,177 +26,188 @@ RSpec.describe SiteMaps::Runner::EventListener do
     end
   end
 
-  describe ".on_sitemaps_runner_enqueue_process" do
-    let(:event_id) { "sitemaps.runner.enqueue_process" }
+  describe ".on_sitemaps_enqueue_process" do
+    let(:event_id) { "sitemaps.enqueue_process" }
 
     context "with a static process" do
+      let(:process) { adapter.processes[:default] }
       let(:payload) do
         {
           runtime: 1.32,
-          process: adapter.processes[:default],
+          process: process,
           kwargs: {}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          Enqueue process #{colorize("default", :bold)}
+          [#{process.id}] Enqueue process #{colorize("default", :bold)}
         MSG
       end
     end
 
     context "with a static process with a location" do
+      let(:process) { adapter.processes[:categories] }
       let(:payload) do
         {
           runtime: 1.32,
-          process: adapter.processes[:categories],
+          process: process,
           kwargs: {}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          Enqueue process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
+        [#{process.id}] Enqueue process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
         MSG
       end
     end
 
     context "with a dynamic process" do
+      let(:process) { adapter.processes[:posts] }
       let(:payload) do
         {
           runtime: 1.32,
-          process: adapter.processes[:posts],
+          process: process,
           kwargs: {year: 2024, month: 11}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          Enqueue process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
-          └── Keyword Arguments: {year: 2024, month: 11}
+          [#{process.id}] Enqueue process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
+               └──── Context: {year: 2024, month: 11}
         MSG
       end
     end
   end
 
-  describe ".on_sitemaps_runner_before_process_execution" do
-    let(:event_id) { "sitemaps.runner.before_process_execution" }
+  describe ".on_sitemaps_before_process_execution" do
+    let(:event_id) { "sitemaps.before_process_execution" }
 
     context "with a static process" do
+      let(:process) { adapter.processes[:default] }
       let(:payload) do
         {
-          process: adapter.processes[:default],
+          process: process,
           kwargs: {}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          Executing process #{colorize("default", :bold)}
+          [#{process.id}] Executing process #{colorize("default", :bold)}
         MSG
       end
     end
 
     context "with a static process with a location" do
+      let(:process) { adapter.processes[:categories] }
       let(:payload) do
         {
-          process: adapter.processes[:categories],
+          process: process,
           kwargs: {}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          Executing process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
+          [#{process.id}] Executing process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
         MSG
       end
     end
 
     context "with a dynamic process" do
+      let(:process) { adapter.processes[:posts] }
       let(:payload) do
         {
-          process: adapter.processes[:posts],
+          process: process,
           kwargs: {year: 2024, month: 11}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          Executing process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
-          └── Keyword Arguments: {year: 2024, month: 11}
+          [#{process.id}] Executing process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
+               └──── Context: {year: 2024, month: 11}
         MSG
       end
     end
   end
 
-  describe ".on_sitemaps_runner_process_execution" do
-    let(:event_id) { "sitemaps.runner.process_execution" }
+  describe ".on_sitemaps_process_execution" do
+    let(:event_id) { "sitemaps.process_execution" }
 
     context "with a static process" do
+      let(:process) { adapter.processes[:default] }
       let(:payload) do
         {
           runtime: 1.32,
-          process: adapter.processes[:default],
+          process: process,
           kwargs: {}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Executed process #{colorize("default", :bold)}
+          [#{process.id}][#{formatted_runtime(1.32)}] Executed process #{colorize("default", :bold)}
         MSG
       end
     end
 
     context "with a static process with a location" do
+      let(:process) { adapter.processes[:categories] }
       let(:payload) do
         {
           runtime: 1.32,
-          process: adapter.processes[:categories],
+          process: process,
           kwargs: {}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Executed process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
+          [#{process.id}][#{formatted_runtime(1.32)}] Executed process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
         MSG
       end
     end
 
     context "with a dynamic process" do
+      let(:process) { adapter.processes[:posts] }
       let(:payload) do
         {
           runtime: 1.32,
-          process: adapter.processes[:posts],
+          process: process,
           kwargs: {year: 2024, month: 11}
         }
       end
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Executed process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
-          └── Keyword Arguments: {year: 2024, month: 11}
+          [#{process.id}][#{formatted_runtime(1.32)}] Executed process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
+               └──── Context: {year: 2024, month: 11}
         MSG
       end
     end
   end
 
-  describe ".on_sitemaps_builder_finalize_urlset" do
-    let(:event_id) { "sitemaps.builder.finalize_urlset" }
+  describe ".on_sitemaps_finalize_urlset" do
+    let(:event_id) { "sitemaps.finalize_urlset" }
+    let(:process) { adapter.processes[:default] }
 
     let(:payload) do
       {
         runtime: 1.32,
         links_count: 10,
         news_count: 2,
-        url: "https://example.com/site/sitemap1.xml"
+        url: "https://example.com/site/sitemap1.xml",
+        process: process,
       }
     end
 
     it "prints message" do
       expect { call! }.to output(<<~MSG).to_stdout
-        [#{formatted_runtime(1.32)}] Finalize URLSet with 10 links and 2 news URLs at #{colorize("https://example.com/site/sitemap1.xml", :lightgray)}
+        [#{process.id}][#{formatted_runtime(1.32)}] Finalize URLSet with 10 links and 2 news URLs at #{colorize("https://example.com/site/sitemap1.xml", :lightgray)}
       MSG
     end
   end

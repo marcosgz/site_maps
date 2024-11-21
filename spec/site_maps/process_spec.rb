@@ -3,6 +3,13 @@
 require "spec_helper"
 
 RSpec.describe SiteMaps::Process do
+  describe "#id" do
+    it "returns a unique id" do
+      process = described_class.new(:name, nil, nil, nil)
+      expect(process.id).to match(/\A[0-9a-f]{8}\z/)
+    end
+  end
+
   describe "#location" do
     it "returns the location" do
       process = described_class.new(:name, "/path/%{year}-%{month}", {}, nil)

@@ -4,11 +4,12 @@ module SiteMaps
   class SitemapBuilder
     extend Forwardable
 
-    def initialize(adapter:, location: nil)
+    def initialize(adapter:, location: nil, notification_payload: {})
       @adapter = adapter
       @url_set = SiteMaps::Builder::URLSet.new
       @location = location
       @mutex = Mutex.new
+      @notification_payload = notification_payload
     end
 
     def add(path, params: nil, **options)
@@ -31,7 +32,7 @@ module SiteMaps
 
       raw_data = url_set.finalize!
 
-      SiteMaps::Notification.instrument("sitemaps.builder.finalize_urlset") do |payload|
+      SiteMaps::Notification.instrument("sitemaps.finalize_urlset", notification_payload) do |payload|
         payload[:links_count] = url_set.links_count
         payload[:news_count] = url_set.news_count
         payload[:last_modified] = url_set.last_modified
@@ -50,13 +51,13 @@ module SiteMaps
 
     protected
 
-    attr_reader :url_set, :adapter, :location
+    attr_reader :url_set, :adapter, :location, :notification_payload
 
     def_delegators :adapter, :sitemap_index, :config, :repo
 
     def finalize_and_start_next_urlset!
       raw_data = url_set.finalize!
-      SiteMaps::Notification.instrument("sitemaps.builder.finalize_urlset") do |payload|
+      SiteMaps::Notification.instrument("sitemaps.finalize_urlset", notification_payload) do |payload|
         sitemap_url = repo.generate_url(location)
         payload[:url] = sitemap_url
         payload[:links_count] = url_set.links_count

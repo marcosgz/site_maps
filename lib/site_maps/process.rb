@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
+require "securerandom"
+
 module SiteMaps
   Process = Concurrent::ImmutableStruct.new(:name, :location_template, :kwargs_template, :block) do
+    def id
+      @id ||= SecureRandom.hex(4)
+    end
+
     def location(**kwargs)
       return unless location_template
 
