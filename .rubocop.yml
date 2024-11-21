@@ -17,6 +17,7 @@ AllCops:
     - "db/**/*"
     - "tmp/**/*"
     - "vendor/**/*"
+    - "spec/support/hooks/notification.rb" # I'll refactor this rspec matcher to allow use things like an_instance_of
   NewCops: enable
 
 RSpec/MultipleExpectations:

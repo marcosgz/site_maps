@@ -19,7 +19,7 @@ RSpec.describe SiteMaps::CLI do
       subject(:generate!) { cli.generate }
 
       it "enqueues all processes" do
-        runner = double("runner", enqueue_all: nil, run: nil)
+        runner = instance_double(SiteMaps::Runner, enqueue_all: nil, run: nil)
         allow(SiteMaps).to receive(:generate).and_return(runner)
 
         generate!
@@ -35,13 +35,13 @@ RSpec.describe SiteMaps::CLI do
       let(:processes) { "default,categories" }
 
       it "enqueues the given processes" do
-        runner = double("runner", enqueue: nil, run: nil)
+        runner = instance_double(SiteMaps::Runner, enqueue: nil, run: nil)
         allow(SiteMaps).to receive(:generate).and_return(runner)
 
         generate!
 
-        expect(runner).to have_received(:enqueue).with(:default, {})
-        expect(runner).to have_received(:enqueue).with(:categories, {})
+        expect(runner).to have_received(:enqueue).with(:default, **{})
+        expect(runner).to have_received(:enqueue).with(:categories, **{})
         expect(runner).to have_received(:run)
       end
     end
@@ -64,7 +64,7 @@ RSpec.describe SiteMaps::CLI do
       end
 
       it "passes the options to the runner" do
-        runner = double("runner", enqueue: nil, run: nil)
+        runner = instance_double(SiteMaps::Runner, enqueue: nil, run: nil)
         allow(SiteMaps).to receive(:generate).and_return(runner)
 
         generate!

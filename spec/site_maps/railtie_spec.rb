@@ -30,7 +30,7 @@ module DummyRails
   end
 end
 
-RSpec.describe SiteMaps::Runner do
+RSpec.describe "SiteMaps::Railtie" do
   before do
     stub_const("Rails", DummyRails)
     allow(Kernel).to receive(:require).with("rails/railtie").and_return(true)

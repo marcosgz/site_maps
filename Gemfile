@@ -2,9 +2,6 @@
 
 source "https://rubygems.org"
 
-gem "puma"
-gem "sqlite3"
-gem "activesupport", "~> 6.0"
 gem "nokogiri"
 gem "webmock"
 gem "aws-sdk-s3"
