@@ -5,19 +5,14 @@ Kernel.require "rails/railtie"
 
 module SiteMaps
   class Railtie < ::Rails::Railtie
-    module URLExtension
-      class NamedRoute
+    initializer "site_maps.named_routes" do
+      named_route = Class.new do
         include Singleton
         include ::Rails.application.routes.url_helpers
       end
-
-      def route
-        NamedRoute.instance
-      end
-    end
-
-    initializer "site_maps.named_routes" do
-      SiteMaps::Adapters::Adapter.prepend(URLExtension)
+      SiteMaps::Adapters::Adapter.prepend(Module.new do
+        define_method(:route) { named_route.instance }
+      end)
     end
   end
 end
