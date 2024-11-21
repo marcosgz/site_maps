@@ -36,10 +36,6 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^exec/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # rails_version = ">= 5.2"
-  # spec.add_dependency "activesupport", rails_version
-  # spec.add_dependency "railties", rails_version
-  # spec.add_dependency "rails", rails_version
   spec.add_dependency "rack", ">= 2.0"
   spec.add_dependency "zeitwerk", ">= 0"
   spec.add_dependency "builder", "~> 3.0"

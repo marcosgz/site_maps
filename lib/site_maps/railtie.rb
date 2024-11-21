@@ -1,11 +1,22 @@
 # frozen_string_literal: true
 
-require "rails/railtie"
+Kernel.require "rails/railtie"
 
 module SiteMaps
   class Railtie < ::Rails::Railtie
-    rake_tasks do
-      load "site_maps/tasks.rb"
+    module URLExtension
+      class NamedRoute
+        include Singleton
+        include ::Rails.application.routes.url_helpers
+      end
+
+      def route
+        NamedRoute.instance
+      end
+    end
+
+    initializer "site_maps.named_routes" do
+      SiteMaps::Adapters::Adapter.prepend(URLExtension)
     end
   end
 end

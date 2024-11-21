@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "site_maps/version"
-# require_relative "site_maps/railtie"
 
-# require "active_support"
 require "builder"
 require "concurrent-ruby"
 require "date"
@@ -107,4 +105,8 @@ module SiteMaps
       @logger ||= DEFAULT_LOGGER
     end
   end
+end
+
+if defined?(::Rails)
+  require_relative "lepus/railtie"
 end
