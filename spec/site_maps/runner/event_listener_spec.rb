@@ -18,7 +18,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
   describe '.[]' do
     it 'returns event method' do
-      expect(described_class['sitemaps.runner.enqueue']).to eq(described_class.method(:on_sitemaps_runner_enqueue))
+      expect(described_class['sitemaps.runner.enqueue_process']).to eq(described_class.method(:on_sitemaps_runner_enqueue_process))
     end
 
     it 'returns nil when listener does not implement the event method' do
@@ -26,8 +26,8 @@ RSpec.describe SiteMaps::Runner::EventListener do
     end
   end
 
-  describe ".on_sitemaps_runner_enqueue" do
-    let(:event_id) { "sitemaps.runner.enqueue" }
+  describe ".on_sitemaps_runner_enqueue_process" do
+    let(:event_id) { "sitemaps.runner.enqueue_process" }
 
     context "with a static process" do
       let(:payload) do
@@ -40,7 +40,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Enqueue process #{colorize("default", :bold)}
+          Enqueue process #{colorize("default", :bold)}
         MSG
       end
     end
@@ -56,7 +56,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Enqueue process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
+          Enqueue process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
         MSG
       end
     end
@@ -72,15 +72,65 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Enqueue process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
+          Enqueue process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
           --> Keyword Arguments: {year: 2024, month: 11}
         MSG
       end
     end
   end
 
-  describe ".on_sitemaps_runner_execute" do
-    let(:event_id) { "sitemaps.runner.execute" }
+  describe ".on_sitemaps_runner_before_process_execution" do
+    let(:event_id) { "sitemaps.runner.before_process_execution" }
+
+    context "with a static process" do
+      let(:payload) do
+        {
+          process: adapter.processes[:default],
+          kwargs: {},
+        }
+      end
+
+      it "prints message" do
+        expect { call! }.to output(<<~MSG).to_stdout
+          Executing process #{colorize("default", :bold)}
+        MSG
+      end
+    end
+
+    context "with a static process with a location" do
+      let(:payload) do
+        {
+          process: adapter.processes[:categories],
+          kwargs: {},
+        }
+      end
+
+      it "prints message" do
+        expect { call! }.to output(<<~MSG).to_stdout
+          Executing process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
+        MSG
+      end
+    end
+
+    context "with a dynamic process" do
+      let(:payload) do
+        {
+          process: adapter.processes[:posts],
+          kwargs: { year: 2024, month: 11 },
+        }
+      end
+
+      it "prints message" do
+        expect { call! }.to output(<<~MSG).to_stdout
+          Executing process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
+          --> Keyword Arguments: {year: 2024, month: 11}
+        MSG
+      end
+    end
+  end
+
+  describe ".on_sitemaps_runner_process_execution" do
+    let(:event_id) { "sitemaps.runner.process_execution" }
 
     context "with a static process" do
       let(:payload) do
@@ -93,7 +143,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Execute process #{colorize("default", :bold)}
+          [#{formatted_runtime(1.32)}] Executed process #{colorize("default", :bold)}
         MSG
       end
     end
@@ -109,7 +159,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Execute process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
+          [#{formatted_runtime(1.32)}] Executed process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
         MSG
       end
     end
@@ -125,7 +175,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-          [#{formatted_runtime(1.32)}] Execute process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
+          [#{formatted_runtime(1.32)}] Executed process #{colorize("posts", :bold)} at #{colorize("posts/2024-11/sitemap.xml", :lightgray)}
           --> Keyword Arguments: {year: 2024, month: 11}
         MSG
       end

@@ -148,14 +148,15 @@ bundle exec site_maps generate monthly_posts --config-file config/sitemap.rb --c
 
 You can subscribe to the internal events to receive notifications about the sitemap generation. The following events are available:
 
-* `sitemaps.runner.enqueue` - Triggered when a process is enqueued.
-* `sitemaps.runner.execute` - Triggered when a process starts.
+* `sitemaps.runner.enqueue_process` - Triggered when a process is enqueued.
+* `sitemaps.runner.before_process_execution` - Triggered before a process starts execution
+* `sitemaps.runner.process_execution` - Triggered when a process finishes execution.
 * `sitemaps.builder.finalize_urlset` - Triggered when the sitemap builder finishes the URL set.
 
 You can subscribe to the events using the following code:
 
 ```ruby
-SiteMaps::Notification.subscribe("sitemaps.runner.enqueue") do |event|
+SiteMaps::Notification.subscribe("sitemaps.runner.enqueue_process") do |event|
   puts "Enqueueing process #{event.payload[:name]}"
 end
 ```

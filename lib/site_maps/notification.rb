@@ -28,8 +28,9 @@ module SiteMaps
 
     include Publisher
 
-    register_event "sitemaps.runner.execute"
-    register_event "sitemaps.runner.process"
     register_event "sitemaps.builder.finalize_urlset"
+    register_event "sitemaps.runner.before_process_execution"
+    register_event "sitemaps.runner.enqueue_process"
+    register_event "sitemaps.runner.process_execution"
   end
 end

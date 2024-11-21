@@ -14,27 +14,40 @@ module SiteMaps
       method(:"on_#{method_name}")
     end
 
-    def on_sitemaps_runner_enqueue(event)
+    def on_sitemaps_runner_enqueue_process(event)
       process = event[:process]
       kwargs = event[:kwargs]
       location = process.location(**kwargs)
       print_message(
-        "[%<runtime>s] Enqueue process %<name>s#{ ' at %<location>s' if location}",
+        "Enqueue process %<name>s#{ ' at %<location>s' if location}",
         name: colorize(process.name, :bold),
         location: colorize(location, :lightgray),
-        runtime: formatted_runtime(event[:runtime])
       )
       if kwargs.any?
         print_message('--> Keyword Arguments: {%<kwargs>s}', kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(', '))
       end
     end
 
-    def on_sitemaps_runner_execute(event)
+    def on_sitemaps_runner_before_process_execution(event)
       process = event[:process]
       kwargs = event[:kwargs]
       location = process.location(**kwargs)
       print_message(
-        "[%<runtime>s] Execute process %<name>s#{ ' at %<location>s' if location}",
+        "Executing process %<name>s#{ ' at %<location>s' if location}",
+        name: colorize(process.name, :bold),
+        location: colorize(location, :lightgray),
+      )
+      if kwargs.any?
+        print_message('--> Keyword Arguments: {%<kwargs>s}', kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(', '))
+      end
+    end
+
+    def on_sitemaps_runner_process_execution(event)
+      process = event[:process]
+      kwargs = event[:kwargs]
+      location = process.location(**kwargs)
+      print_message(
+        "[%<runtime>s] Executed process %<name>s#{ ' at %<location>s' if location}",
         name: colorize(process.name, :bold),
         location: colorize(location, :lightgray),
         runtime: formatted_runtime(event[:runtime])
