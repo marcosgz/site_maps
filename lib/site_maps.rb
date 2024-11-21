@@ -108,5 +108,5 @@ module SiteMaps
 end
 
 if defined?(::Rails)
-  require_relative "lepus/railtie"
+  require_relative "site_maps/railtie"
 end

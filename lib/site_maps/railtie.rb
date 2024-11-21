@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "singleton"
 Kernel.require "rails/railtie"
 
 module SiteMaps

@@ -56,8 +56,9 @@ module SiteMaps
 
     def load_rails
       require File.expand_path(File.join(Dir.pwd, 'config', 'application.rb'))
+      require_relative 'railtie'
 
-      Rails.application.require_environment!
+      ::Rails.application.require_environment!
     end
   end
 end
