@@ -13,13 +13,11 @@ module SiteMaps
 
     def add(path, params: nil, **options)
       @mutex.synchronize do
-        begin
-          link = build_link(path, params)
-          url_set.add(link, **options)
-        rescue SiteMaps::FullSitemapError
-          finalize_and_start_next_urlset!
-          url_set.add(link, **options)
-        end
+        link = build_link(path, params)
+        url_set.add(link, **options)
+      rescue SiteMaps::FullSitemapError
+        finalize_and_start_next_urlset!
+        url_set.add(link, **options)
       end
     end
 
@@ -33,7 +31,7 @@ module SiteMaps
 
       raw_data = url_set.finalize!
 
-      SiteMaps::Notification.instrument('sitemaps.builder.finalize_urlset') do |payload|
+      SiteMaps::Notification.instrument("sitemaps.builder.finalize_urlset") do |payload|
         payload[:links_count] = url_set.links_count
         payload[:news_count] = url_set.news_count
         payload[:last_modified] = url_set.last_modified
@@ -58,7 +56,7 @@ module SiteMaps
 
     def finalize_and_start_next_urlset!
       raw_data = url_set.finalize!
-      SiteMaps::Notification.instrument('sitemaps.builder.finalize_urlset') do |payload|
+      SiteMaps::Notification.instrument("sitemaps.builder.finalize_urlset") do |payload|
         sitemap_url = repo.generate_url(location)
         payload[:url] = sitemap_url
         payload[:links_count] = url_set.links_count

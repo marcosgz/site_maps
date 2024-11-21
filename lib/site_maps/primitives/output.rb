@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 begin
-  require 'rainbow'
+  require "rainbow"
 rescue LoadError
 end
 
@@ -11,11 +11,11 @@ module SiteMaps
       module_function
 
       def formatted_runtime(number)
-        colorize(sprintf('%.3f ms', number), :lightgray)
+        colorize(sprintf("%.3f ms", number), :lightgray)
       end
 
       def runtime_padding(number, extra = 2)
-        ' ' * (extra + sprintf('%.3f ms', number).size)
+        " " * (extra + sprintf("%.3f ms", number).size)
       end
 
       def colorize(text, *attributes)
@@ -46,11 +46,11 @@ module SiteMaps
       end
 
       def print_message(message, level: :info, output: $stdout, newline: true, **fields)
-        output = \
+        output =
           case output
-          when :stdout, 'stdout'
+          when :stdout, "stdout"
             $stdout
-          when :stderr, 'stderr'
+          when :stderr, "stderr"
             $stderr
           when IO, StringIO
             output

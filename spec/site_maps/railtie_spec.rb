@@ -25,7 +25,7 @@ module DummyRails
   module_function
 
   def application
-    require 'ostruct'
+    require "ostruct"
     OpenStruct.new(routes: OpenStruct.new(url_helpers: URLHelpers))
   end
 end

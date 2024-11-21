@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 module SiteMaps
   module Runner::EventListener
     extend Primitives::Output
@@ -19,12 +18,12 @@ module SiteMaps
       kwargs = event[:kwargs]
       location = process.location(**kwargs)
       print_message(
-        "Enqueue process %<name>s#{ ' at %<location>s' if location}",
+        "Enqueue process %<name>s#{" at %<location>s" if location}",
         name: colorize(process.name, :bold),
-        location: colorize(location, :lightgray),
+        location: colorize(location, :lightgray)
       )
       if kwargs.any?
-        print_message('--> Keyword Arguments: {%<kwargs>s}', kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(', '))
+        print_message("--> Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
       end
     end
 
@@ -33,12 +32,12 @@ module SiteMaps
       kwargs = event[:kwargs]
       location = process.location(**kwargs)
       print_message(
-        "Executing process %<name>s#{ ' at %<location>s' if location}",
+        "Executing process %<name>s#{" at %<location>s" if location}",
         name: colorize(process.name, :bold),
-        location: colorize(location, :lightgray),
+        location: colorize(location, :lightgray)
       )
       if kwargs.any?
-        print_message('--> Keyword Arguments: {%<kwargs>s}', kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(', '))
+        print_message("--> Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
       end
     end
 
@@ -47,13 +46,13 @@ module SiteMaps
       kwargs = event[:kwargs]
       location = process.location(**kwargs)
       print_message(
-        "[%<runtime>s] Executed process %<name>s#{ ' at %<location>s' if location}",
+        "[%<runtime>s] Executed process %<name>s#{" at %<location>s" if location}",
         name: colorize(process.name, :bold),
         location: colorize(location, :lightgray),
         runtime: formatted_runtime(event[:runtime])
       )
       if kwargs.any?
-        print_message('--> Keyword Arguments: {%<kwargs>s}', kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(', '))
+        print_message("--> Keyword Arguments: {%<kwargs>s}", kwargs: kwargs.map { |k, v| "#{k}: #{v.inspect}" }.join(", "))
       end
     end
 
@@ -61,7 +60,7 @@ module SiteMaps
       links_count = event[:links_count]
       news_count = event[:news_count]
       url = event[:url]
-      text = String.new("[%<runtime>s] Finalize URLSet with ")
+      text = +"[%<runtime>s] Finalize URLSet with "
       text << "%<links>d links" if links_count > 0
       text << " and " if links_count > 0 && news_count > 0
       text << "%<news>d news" if news_count > 0

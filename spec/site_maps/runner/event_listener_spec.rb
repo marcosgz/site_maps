@@ -16,13 +16,13 @@ RSpec.describe SiteMaps::Runner::EventListener do
   end
   let(:payload) { {} }
 
-  describe '.[]' do
-    it 'returns event method' do
-      expect(described_class['sitemaps.runner.enqueue_process']).to eq(described_class.method(:on_sitemaps_runner_enqueue_process))
+  describe ".[]" do
+    it "returns event method" do
+      expect(described_class["sitemaps.runner.enqueue_process"]).to eq(described_class.method(:on_sitemaps_runner_enqueue_process))
     end
 
-    it 'returns nil when listener does not implement the event method' do
-      expect(described_class['sitemaps.runner.missing']).to eq(nil)
+    it "returns nil when listener does not implement the event method" do
+      expect(described_class["sitemaps.runner.missing"]).to be_nil
     end
   end
 
@@ -34,7 +34,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         {
           runtime: 1.32,
           process: adapter.processes[:default],
-          kwargs: {},
+          kwargs: {}
         }
       end
 
@@ -50,7 +50,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         {
           runtime: 1.32,
           process: adapter.processes[:categories],
-          kwargs: {},
+          kwargs: {}
         }
       end
 
@@ -66,7 +66,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         {
           runtime: 1.32,
           process: adapter.processes[:posts],
-          kwargs: { year: 2024, month: 11 },
+          kwargs: {year: 2024, month: 11}
         }
       end
 
@@ -86,7 +86,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
       let(:payload) do
         {
           process: adapter.processes[:default],
-          kwargs: {},
+          kwargs: {}
         }
       end
 
@@ -101,7 +101,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
       let(:payload) do
         {
           process: adapter.processes[:categories],
-          kwargs: {},
+          kwargs: {}
         }
       end
 
@@ -116,7 +116,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
       let(:payload) do
         {
           process: adapter.processes[:posts],
-          kwargs: { year: 2024, month: 11 },
+          kwargs: {year: 2024, month: 11}
         }
       end
 
@@ -137,7 +137,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         {
           runtime: 1.32,
           process: adapter.processes[:default],
-          kwargs: {},
+          kwargs: {}
         }
       end
 
@@ -153,7 +153,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         {
           runtime: 1.32,
           process: adapter.processes[:categories],
-          kwargs: {},
+          kwargs: {}
         }
       end
 
@@ -169,7 +169,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         {
           runtime: 1.32,
           process: adapter.processes[:posts],
-          kwargs: { year: 2024, month: 11 },
+          kwargs: {year: 2024, month: 11}
         }
       end
 
@@ -190,7 +190,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         runtime: 1.32,
         links_count: 10,
         news_count: 2,
-        url: "https://example.com/site/sitemap1.xml",
+        url: "https://example.com/site/sitemap1.xml"
       }
     end
 
@@ -209,4 +209,3 @@ RSpec.describe SiteMaps::Runner::EventListener do
     SiteMaps::Primitives::Output.formatted_runtime(runtime)
   end
 end
-

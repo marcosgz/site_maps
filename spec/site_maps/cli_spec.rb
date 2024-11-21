@@ -4,13 +4,13 @@ require "spec_helper"
 require "site_maps/cli"
 
 RSpec.describe SiteMaps::CLI do
-  let(:cli) { SiteMaps::CLI.new }
+  let(:cli) { described_class.new }
 
   describe "#version" do
     subject(:version!) { cli.version }
 
     it "prints the version" do
-      expect { version! }.to output(/SiteMaps version: #{SiteMaps::VERSION}/).to_stdout
+      expect { version! }.to output(/SiteMaps version: #{SiteMaps::VERSION}/o).to_stdout
     end
   end
 
@@ -55,7 +55,7 @@ RSpec.describe SiteMaps::CLI do
           debug: true,
           logfile: "/tmp/site_maps.log",
           max_threads: 8,
-          context: { "year" => "2022", "month" => "2"}
+          context: {"year" => "2022", "month" => "2"}
         }
       end
 
