@@ -9,10 +9,10 @@ Gem::Specification.new do |spec|
   spec.email = ["mgzmaster@gmail.com"]
 
   spec.summary = <<~SUMMARY
-    SiteMaps simplifies the generation of sitemaps for ruby or rails applications.
+    Concurrent and Incremental sitemap.xml builder for ruby applications
   SUMMARY
   spec.description = <<~DESCRIPTION
-    SiteMaps is gem that provides a simple way to generate static sitemaps for your ruby or rails applications.
+    SiteMaps is a framework-agnostic library for building sitemap.xml files in a concurrent and incremental way.
   DESCRIPTION
 
   spec.homepage = "https://github.com/marcosgz/site_maps"
@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["bug_tracker_uri"] = "https://github.com/marcosgz/site_maps/issues"
-  spec.metadata["documentation_uri"] = "https://github.com/marcosgz/site_maps"
+  spec.metadata["documentation_uri"] = "https://github.com/marcosgz/site_mapsg"
   spec.metadata["source_code_uri"] = "https://github.com/marcosgz/site_maps"
 
   # Specify which files should be added to the gem when it is released.
