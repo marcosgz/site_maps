@@ -517,7 +517,7 @@ If you adapter requires additional configuration, you can define a `<adapter cla
 
 ```ruby
 class MyAdapter::Config < SiteMaps::Configuration
-  attribute :api_key, String
+  attribute :api_key, default: -> { ENV["MY_API_KEY"] }
 end
 ```
 
