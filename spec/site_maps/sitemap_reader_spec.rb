@@ -16,7 +16,7 @@ RSpec.describe SiteMaps::SitemapReader do
       it "raises an error if the file does not exist" do
         reader = described_class.new("unknown.xml")
 
-        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFound)
+        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
       end
     end
 
@@ -32,7 +32,7 @@ RSpec.describe SiteMaps::SitemapReader do
       it "raises an error if the file does not exist" do
         reader = described_class.new("unknown.xml.gz")
 
-        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFound)
+        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
       end
     end
 
@@ -50,7 +50,7 @@ RSpec.describe SiteMaps::SitemapReader do
       it "raises an error if the file does not exist" do
         stub_request(:get, location).to_return(status: 404)
 
-        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFound)
+        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
       end
     end
 
@@ -68,7 +68,7 @@ RSpec.describe SiteMaps::SitemapReader do
       it "raises an error if the file does not exist" do
         stub_request(:get, location).to_return(status: 404)
 
-        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFound)
+        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
       end
     end
   end
@@ -85,7 +85,7 @@ RSpec.describe SiteMaps::SitemapReader do
     it "raises an error if the file does not exist" do
       reader = described_class.new("unknown.xml")
 
-      expect { reader.to_doc }.to raise_error(SiteMaps::SitemapReader::FileNotFound)
+      expect { reader.to_doc }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
     end
   end
 end

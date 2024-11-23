@@ -5,8 +5,8 @@ require "open-uri"
 module SiteMaps
   class SitemapReader
     Error = Class.new(SiteMaps::Error)
-    FileNotFound = Class.new(Error)
-    MalformedFile = Class.new(Error)
+    FileNotFoundError = Class.new(Error)
+    MalformedFileError = Class.new(Error)
 
     def initialize(location)
       @location = Pathname.new(location)
@@ -19,7 +19,7 @@ module SiteMaps
         read_file.read
       end
     rescue Zlib::GzipFile::Error => _e
-      raise MalformedFile.new("The file #{@location} is not a valid Gzip file")
+      raise MalformedFileError.new("The file #{@location} is not a valid Gzip file")
     end
 
     def to_doc
@@ -40,9 +40,9 @@ module SiteMaps
         ::File.open(@location, "r")
       end
     rescue Errno::ENOENT
-      raise FileNotFound.new("The file #{@location} does not exist")
+      raise FileNotFoundError.new("The file #{@location} does not exist")
     rescue OpenURI::HTTPError
-      raise FileNotFound.new("The file #{@location} could not be opened")
+      raise FileNotFoundError.new("The file #{@location} could not be opened")
     end
 
     def compressed?

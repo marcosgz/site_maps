@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    site_maps (0.0.1.beta2)
+    site_maps (0.0.1.beta3)
       builder (~> 3.0)
       concurrent-ruby (>= 1.1)
       rack (>= 2.0)

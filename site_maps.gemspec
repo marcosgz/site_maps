@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["bug_tracker_uri"] = "https://github.com/marcosgz/site_maps/issues"
-  spec.metadata["documentation_uri"] = "https://github.com/marcosgz/site_mapsg"
+  spec.metadata["documentation_uri"] = "https://github.com/marcosgz/site_maps"
   spec.metadata["source_code_uri"] = "https://github.com/marcosgz/site_maps"
 
   # Specify which files should be added to the gem when it is released.
