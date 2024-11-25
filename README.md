@@ -596,7 +596,7 @@ SiteMaps.generate(config_file: "config/sitemap.rb")
 
 ## Mixins
 
-You can use mixins to extend the sitemap builder with additional methods. The mixins can be used to define common methods that will be used in multiple processes. Make sure they are thread-safe, otherwise I recommend to define them in the process block.
+You can use mixins to extend the sitemap builder with additional methods. The mixins can be used to define common methods that will be used in multiple processes.
 
 ```ruby
 module MyMixin
@@ -610,10 +610,10 @@ module MyMixin
 end
 
 SiteMaps.use(:file_system) do
-  include_module(MyMixin)
+  extend_processes_with(MyMixin)
   process do |s|
-    repository.posts.each do |post|
-      s.add(post_path(post), priority: 0.8)
+    s.repository.posts.each do |post|
+      s.add(s.post_path(post), priority: 0.8)
     end
   end
 end
@@ -622,11 +622,9 @@ end
 We already have a built-in mixin for Rails applications that provides the url helpers through the `route` method.
 
 ```ruby
-SiteMaps.use(:file_system) do
-  include_module(SiteMaps::Mixins::Rails)
   process do |s|
-    s.add(route.root_path, priority: 1.0)
-    s.add(route.about_path, priority: 0.9)
+    s.add(s.route.root_path, priority: 1.0)
+    s.add(s.route.about_path, priority: 0.9)
   end
 end
 ```

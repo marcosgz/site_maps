@@ -275,6 +275,37 @@ RSpec.describe SiteMaps::Runner do
         )
       end
     end
+
+    context "when the adapter has a process mixin" do
+      let(:adapter) do
+        SiteMaps.use(:noop) do
+          config.url = "https://example.com/sitemap.xml"
+          extend_processes_with(Module.new do
+            def add_post(year:)
+              add("/posts/#{year}/index.html")
+            end
+          end)
+
+          process(:posts, "posts/%{year}/sitemap.xml", year: 2024) do |s, year:|
+            s.add_post(year: year)
+          end
+        end
+      end
+
+      it "extends the process with the mixin" do
+        runner.enqueue(:posts, year: 2024)
+
+        process = adapter.processes[:posts]
+        allow(process).to receive(:call).and_call_original
+
+        expect { runner.run }.not_to raise_error
+
+        expect(process).to have_received(:call).with(
+          an_instance_of(SiteMaps::SitemapBuilder),
+          year: 2024
+        )
+      end
+    end
   end
 
   describe "#preload_sitemap_index_links?" do

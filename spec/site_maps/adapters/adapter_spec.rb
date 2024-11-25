@@ -197,7 +197,7 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
   end
 
-  describe "#include_module" do
+  describe "#extend_processes_with" do
     let(:adapter) { described_class.new }
     let(:mod) do
       Module.new do
@@ -208,8 +208,8 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
 
     it "includes the module" do
-      adapter.include_module(mod)
-      expect(adapter).to respond_to(:foo)
+      adapter.extend_processes_with(mod)
+      expect(adapter.process_mixins).to include(mod)
     end
   end
 end

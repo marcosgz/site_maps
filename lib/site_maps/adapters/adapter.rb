@@ -13,11 +13,12 @@ module SiteMaps::Adapters
     end
 
     def_delegators :config, :fetch_sitemap_index_links
-    attr_reader :sitemap_index, :processes
+    attr_reader :sitemap_index, :processes, :process_mixins
 
     def initialize(**options, &block)
       @config = SiteMaps.config.becomes(self.class.config_class, **options)
       @processes = Concurrent::Hash.new
+      @process_mixins = Concurrent::Array.new
       reset!
       instance_exec(&block) if block
     end
@@ -68,8 +69,8 @@ module SiteMaps::Adapters
       @repo ||= SiteMaps::AtomicRepository.new(config.url)
     end
 
-    def include_module(mod)
-      extend(mod)
+    def extend_processes_with(mod)
+      @process_mixins << mod
     end
 
     def reset!
