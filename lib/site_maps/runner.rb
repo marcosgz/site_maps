@@ -62,7 +62,7 @@ module SiteMaps
                 builder = SiteMaps::SitemapBuilder.new(
                   adapter: adapter,
                   location: process.location(**kwargs),
-                  notification_payload: { process: process }
+                  notification_payload: {process: process}
                 )
                 adapter.process_mixins.each { |mixin| builder.extend(mixin) }
                 process.call(builder, **kwargs)

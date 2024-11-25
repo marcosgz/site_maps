@@ -58,7 +58,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
 
       it "prints message" do
         expect { call! }.to output(<<~MSG).to_stdout
-        [#{process.id}] Enqueue process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
+          [#{process.id}] Enqueue process #{colorize("categories", :bold)} at #{colorize("categories/sitemap.xml", :lightgray)}
         MSG
       end
     end
@@ -201,7 +201,7 @@ RSpec.describe SiteMaps::Runner::EventListener do
         links_count: 10,
         news_count: 2,
         url: "https://example.com/site/sitemap1.xml",
-        process: process,
+        process: process
       }
     end
 
