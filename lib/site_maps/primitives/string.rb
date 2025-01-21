@@ -20,10 +20,22 @@ module SiteMaps::Primitives
       elsif defined?(ActiveSupport::Inflector)
         ActiveSupport::Inflector.classify(self)
       else
-        split("_").map(&:capitalize).join
+        split("/").collect do |c|
+          c.split("_").collect(&:capitalize).join
+        end.join("::")
       end
 
       self.class.new(new_str)
+    end
+
+    def constantize
+      if defined?(Dry::Inflector)
+        Dry::Inflector.new.constantize(self)
+      elsif defined?(ActiveSupport::Inflector)
+        ActiveSupport::Inflector.constantize(self)
+      else
+        Object.const_get(self)
+      end
     end
 
     def underscore
