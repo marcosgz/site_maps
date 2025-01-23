@@ -49,10 +49,10 @@ RSpec.describe SiteMaps::Primitive::String do
     context "when dry-inflector is available" do
       before do
         stub_const("Dry::Inflector", Class.new {
-                                      def constantize(string)
-                                        MyConstant if string == "MyConstant"
-                                      end
-                                    })
+                                       def constantize(string)
+                                         MyConstant if string == "MyConstant"
+                                       end
+                                     })
       end
 
       it "returns the constantized string" do
@@ -63,10 +63,10 @@ RSpec.describe SiteMaps::Primitive::String do
     context "when active-support is available" do
       before do
         stub_const("ActiveSupport::Inflector", Class.new {
-                                                def self.constantize(string)
-                                                  MyConstant if string == "MyConstant"
-                                                end
-                                              })
+                                                 def self.constantize(string)
+                                                   MyConstant if string == "MyConstant"
+                                                 end
+                                               })
       end
 
       it "returns the constantized string" do
@@ -74,7 +74,6 @@ RSpec.describe SiteMaps::Primitive::String do
       end
     end
   end
-
 
   describe "#underscore" do
     subject { described_class.new(arg).underscore }
