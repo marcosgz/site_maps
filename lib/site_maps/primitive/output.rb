@@ -6,7 +6,7 @@ rescue LoadError
 end
 
 module SiteMaps
-  module Primitives
+  module Primitive
     module Output
       module_function
 

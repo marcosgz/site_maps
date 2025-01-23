@@ -43,7 +43,7 @@ module SiteMaps
 
       # @api private
       def listener_method
-        @listener_method ||= Primitives::String.new("on_#{id}").underscore.to_sym
+        @listener_method ||= Primitive::String.new("on_#{id}").underscore.to_sym
       end
     end
   end

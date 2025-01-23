@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Primitives::Array do
+RSpec.describe SiteMaps::Primitive::Array do
   describe ".wrap" do
     specify do
       expect(described_class.wrap(nil)).to eq([])

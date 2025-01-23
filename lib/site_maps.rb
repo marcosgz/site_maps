@@ -54,7 +54,7 @@ module SiteMaps
       adapter_class = if adapter.is_a?(Class) # && adapter < Adapters::Adapter
         adapter
       else
-        const_name = Primitives::String.new(adapter.to_s).classify
+        const_name = Primitive::String.new(adapter.to_s).classify
         begin
           Adapters.const_get(const_name)
         rescue NameError

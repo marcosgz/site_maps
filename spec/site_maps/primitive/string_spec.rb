@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe SiteMaps::Primitives::String do
+RSpec.describe SiteMaps::Primitive::String do
   describe "#classify" do
     context "when dry-inflector is available" do
       before do
@@ -38,6 +38,43 @@ RSpec.describe SiteMaps::Primitives::String do
       end
     end
   end
+
+  describe "#constantize" do
+    let(:constant) { Class.new }
+
+    before do
+      stub_const("MyConstant", constant)
+    end
+
+    context "when dry-inflector is available" do
+      before do
+        stub_const("Dry::Inflector", Class.new {
+                                      def constantize(string)
+                                        MyConstant if string == "MyConstant"
+                                      end
+                                    })
+      end
+
+      it "returns the constantized string" do
+        expect(described_class.new("MyConstant").constantize).to eq(constant)
+      end
+    end
+
+    context "when active-support is available" do
+      before do
+        stub_const("ActiveSupport::Inflector", Class.new {
+                                                def self.constantize(string)
+                                                  MyConstant if string == "MyConstant"
+                                                end
+                                              })
+      end
+
+      it "returns the constantized string" do
+        expect(described_class.new("MyConstant").constantize).to eq(constant)
+      end
+    end
+  end
+
 
   describe "#underscore" do
     subject { described_class.new(arg).underscore }

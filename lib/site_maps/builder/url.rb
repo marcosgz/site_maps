@@ -14,17 +14,17 @@ module SiteMaps::Builder
     def initialize(link, **attributes)
       @attributes = DEFAULTS.merge(attributes)
       @attributes[:loc] = link
-      @attributes[:alternates] = SiteMaps::Primitives::Array.wrap(@attributes[:alternates])
-      @attributes[:videos] = SiteMaps::Primitives::Array.wrap(@attributes[:videos])
-      @attributes[:images] = SiteMaps::Primitives::Array.wrap(@attributes[:images])
+      @attributes[:alternates] = SiteMaps::Primitive::Array.wrap(@attributes[:alternates])
+      @attributes[:videos] = SiteMaps::Primitive::Array.wrap(@attributes[:videos])
+      @attributes[:images] = SiteMaps::Primitive::Array.wrap(@attributes[:images])
       if (video = @attributes.delete(:video))
-        @attributes[:videos].concat(SiteMaps::Primitives::Array.wrap(video))
+        @attributes[:videos].concat(SiteMaps::Primitive::Array.wrap(video))
       end
       if (alternate = @attributes.delete(:alternate))
-        @attributes[:alternates].concat(SiteMaps::Primitives::Array.wrap(alternate))
+        @attributes[:alternates].concat(SiteMaps::Primitive::Array.wrap(alternate))
       end
       if (image = @attributes.delete(:image))
-        @attributes[:images].concat(SiteMaps::Primitives::Array.wrap(image))
+        @attributes[:images].concat(SiteMaps::Primitive::Array.wrap(image))
       end
       @attributes[:images] = @attributes[:images][0...SiteMaps::MAX_LENGTH[:images]]
     end
@@ -121,9 +121,9 @@ module SiteMaps::Builder
 
         if self[:pagemap].is_a?(Hash) && (pagemap = self[:pagemap]).any?
           builder.pagemap :PageMap do
-            SiteMaps::Primitives::Array.wrap(pagemap[:dataobjects]).each do |dataobject|
+            SiteMaps::Primitive::Array.wrap(pagemap[:dataobjects]).each do |dataobject|
               builder.pagemap :DataObject, type: dataobject[:type].to_s, id: dataobject[:id].to_s do
-                SiteMaps::Primitives::Array.wrap(dataobject[:attributes]).each do |attribute|
+                SiteMaps::Primitive::Array.wrap(dataobject[:attributes]).each do |attribute|
                   builder.pagemap :Attribute, attribute[:value].to_s, name: attribute[:name].to_s
                 end
               end

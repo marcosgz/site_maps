@@ -12,7 +12,7 @@ rescue LoadError
   # noop
 end
 
-module SiteMaps::Primitives
+module SiteMaps::Primitive
   class String < ::String
     def classify
       new_str = if defined?(Dry::Inflector)

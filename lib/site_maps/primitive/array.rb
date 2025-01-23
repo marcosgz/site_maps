@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module SiteMaps::Primitives
+module SiteMaps::Primitive
   class Array < ::Array
     def self.wrap(object)
       if object.nil?

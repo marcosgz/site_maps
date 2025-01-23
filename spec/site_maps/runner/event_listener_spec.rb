@@ -213,10 +213,10 @@ RSpec.describe SiteMaps::Runner::EventListener do
   end
 
   def colorize(*args)
-    SiteMaps::Primitives::Output.colorize(*args)
+    SiteMaps::Primitive::Output.colorize(*args)
   end
 
   def formatted_runtime(runtime)
-    SiteMaps::Primitives::Output.formatted_runtime(runtime)
+    SiteMaps::Primitive::Output.formatted_runtime(runtime)
   end
 end

@@ -2,12 +2,12 @@
 
 module SiteMaps
   module Runner::EventListener
-    extend Primitives::Output
+    extend Primitive::Output
 
     module_function
 
     def [](event_name)
-      method_name = Primitives::String.new(event_name).underscore.to_sym
+      method_name = Primitive::String.new(event_name).underscore.to_sym
       return unless respond_to?(:"on_#{method_name}")
 
       method(:"on_#{method_name}")
