@@ -3,32 +3,60 @@
 require "spec_helper"
 
 RSpec.describe SiteMaps::Primitive::String do
-  describe "#classify" do
-    context "when dry-inflector is available" do
-      before do
-        stub_const("Dry::Inflector", Class.new {
-                                       def classify(string)
-                                         "Classified"
-                                       end
-                                     })
-      end
+  after do
+    described_class.remove_instance_variable(:@inflector)
+  end
 
-      it "returns the classified string" do
-        expect(described_class.new("string").classify).to eq("Classified")
-      end
+  describe ".inflector" do
+    subject { described_class.inflector }
+
+    before do
+      described_class.remove_instance_variable(:@inflector)
+    rescue NameError
     end
 
-    context "when active-support is available" do
+    context "when ActiveSupport::Inflector is available" do
       before do
-        stub_const("ActiveSupport::Inflector", Class.new {
-                                                 def self.classify(string)
-                                                   "Classified"
-                                                 end
-                                               })
+        stub_const("ActiveSupport::Inflector", Class.new)
+      end
+
+      it { is_expected.to eq(ActiveSupport::Inflector) }
+    end
+
+    context "when Dry::Inflector is available" do
+      before do
+        stub_const("Dry::Inflector", Class.new)
+      end
+
+      it { is_expected.to be_a(Dry::Inflector) }
+    end
+
+    context "when no inflector is available" do
+      it { is_expected.to be_nil }
+    end
+  end
+
+  describe "#classify" do
+    let(:inflector) { nil }
+
+    before do
+      described_class.instance_variable_set(:@inflector, inflector)
+    end
+
+    context "when inflector is available" do
+      let(:inflector) do
+        Class.new {
+          def classify(string)
+            "Classified"
+          end
+        }.new
       end
 
       it "returns the classified string" do
-        expect(described_class.new("string").classify).to eq("Classified")
+        allow(inflector).to receive(:classify)
+        expect(described_class.new("classified").classify).to eq("Classified")
+
+        expect(inflector).to have_received(:classify).with("classified")
       end
     end
 
@@ -41,18 +69,20 @@ RSpec.describe SiteMaps::Primitive::String do
 
   describe "#constantize" do
     let(:constant) { Class.new }
+    let(:inflector) { nil }
 
     before do
+      described_class.instance_variable_set(:@inflector, inflector)
       stub_const("MyConstant", constant)
     end
 
-    context "when dry-inflector is available" do
-      before do
-        stub_const("Dry::Inflector", Class.new {
-                                       def constantize(string)
-                                         MyConstant if string == "MyConstant"
-                                       end
-                                     })
+    context "when inflector is available" do
+      let(:inflector) do
+        Class.new {
+          def constantize(string)
+            MyConstant if string == "MyConstant"
+          end
+        }.new
       end
 
       it "returns the constantized string" do
@@ -60,15 +90,7 @@ RSpec.describe SiteMaps::Primitive::String do
       end
     end
 
-    context "when active-support is available" do
-      before do
-        stub_const("ActiveSupport::Inflector", Class.new {
-                                                 def self.constantize(string)
-                                                   MyConstant if string == "MyConstant"
-                                                 end
-                                               })
-      end
-
+    context "when no inflector is available" do
       it "returns the constantized string" do
         expect(described_class.new("MyConstant").constantize).to eq(constant)
       end
@@ -124,6 +146,131 @@ RSpec.describe SiteMaps::Primitive::String do
       let(:arg) { "user_______name" }
 
       it { is_expected.to eq("user_name") }
+    end
+  end
+
+  describe "#pluralize" do
+    let(:inflector) { nil }
+
+    before do
+      described_class.instance_variable_set(:@inflector, inflector)
+    end
+
+    context "when inflector is available" do
+      let(:inflector) do
+        Class.new {
+          def pluralize(string)
+            "users"
+          end
+        }.new
+      end
+
+      it "returns the pluralized string" do
+        allow(inflector).to receive(:pluralize)
+        expect(described_class.new("user").pluralize).to eq("users")
+
+        expect(inflector).to have_received(:pluralize).with("user")
+      end
+    end
+
+    context "when no inflector is available" do
+      it "returns the pluralized string" do
+        expect(described_class.new("user").pluralize).to eq("users")
+      end
+
+      it "returns pluralized string ending with 'y'" do
+        expect(described_class.new("city").pluralize).to eq("cities")
+      end
+    end
+  end
+
+  describe "#singularize" do
+    let(:inflector) { nil }
+
+    before do
+      described_class.instance_variable_set(:@inflector, inflector)
+    end
+
+    context "when inflector is available" do
+      let(:inflector) do
+        Class.new {
+          def singularize(string)
+            "user"
+          end
+        }.new
+      end
+
+      it "returns the singularized string" do
+        allow(inflector).to receive(:singularize)
+        expect(described_class.new("users").singularize).to eq("user")
+
+        expect(inflector).to have_received(:singularize).with("users")
+      end
+    end
+
+    context "when no inflector is available" do
+      it "returns the singularized string" do
+        expect(described_class.new("users").singularize).to eq("user")
+      end
+
+      it "returns singularized string ending with 'ies'" do
+        expect(described_class.new("cities").singularize).to eq("city")
+      end
+    end
+  end
+
+  describe "#camelize" do
+    let(:inflector) { nil }
+
+    before do
+      described_class.instance_variable_set(:@inflector, inflector)
+    end
+
+    context "when inflector is available" do
+      let(:inflector) do
+        Class.new {
+          def camelize(string, uppercase_first_letter)
+            "User"
+          end
+        }.new
+      end
+
+      it "returns the camelized string" do
+        allow(inflector).to receive(:camelize)
+        expect(described_class.new("user").camelize).to eq("User")
+
+        expect(inflector).to have_received(:camelize).with("user", true)
+      end
+    end
+
+    context "when no inflector is available" do
+      it "returns the camelized string" do
+        expect(described_class.new("user").camelize).to eq("User")
+      end
+
+      it "returns the camelized string with uppercase first letter" do
+        expect(described_class.new("user").camelize(true)).to eq("User")
+      end
+
+      it "returns the camelized string with lowercase first letter" do
+        expect(described_class.new("user").camelize(false)).to eq("user")
+      end
+
+      it "returns the camelized string with uppercase first letter and underscore" do
+        expect(described_class.new("user_name").camelize(true)).to eq("UserName")
+      end
+
+      it "returns the camelized string with lowercase first letter and underscore" do
+        expect(described_class.new("user_name").camelize(false)).to eq("userName")
+      end
+
+      it "returns the camelized string with uppercase first letter and dash" do
+        expect(described_class.new("user-name").camelize(true)).to eq("UserName")
+      end
+
+      it "returns the camelized string with namespace" do
+        expect(described_class.new("admin/user_name").camelize(true)).to eq("Admin::UserName")
+      end
     end
   end
 end
