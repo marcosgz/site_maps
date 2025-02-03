@@ -83,7 +83,7 @@ module SiteMaps::Primitive
     def camelize(uppercase_first_letter = true)
       new_str = inflector&.camelize(self, uppercase_first_letter) || begin
         # dummy camelize
-        str = self.to_s
+        str = to_s
         str = str.sub(/^[a-z\d]*/) { $&.capitalize }
         str = str.tr("-", "_")
         str = str.gsub(/(?:_|(\/))([a-z\d]*)/i) { "#{$1}#{$2.capitalize}" }
