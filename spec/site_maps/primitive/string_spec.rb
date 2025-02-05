@@ -16,6 +16,8 @@ RSpec.describe SiteMaps::Primitive::String do
     rescue NameError
     end
 
+    # rubocop:disable RSpec/RemoveConst
+    # rubocop:disable RSpec/InstanceVariable
     context "when ActiveSupport::Inflector is available" do
       before do
         stub_const("ActiveSupport::Inflector", Class.new)
@@ -78,6 +80,8 @@ RSpec.describe SiteMaps::Primitive::String do
       it { is_expected.to be_nil }
     end
   end
+  # rubocop:enable RSpec/InstanceVariable
+  # rubocop:enable RSpec/RemoveConst
 
   describe "#classify" do
     let(:inflector) { nil }
