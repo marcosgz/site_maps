@@ -5,6 +5,7 @@ require "spec_helper"
 RSpec.describe SiteMaps::Primitive::String do
   after do
     described_class.remove_instance_variable(:@inflector)
+  rescue NameError
   end
 
   describe ".inflector" do
@@ -18,6 +19,17 @@ RSpec.describe SiteMaps::Primitive::String do
     context "when ActiveSupport::Inflector is available" do
       before do
         stub_const("ActiveSupport::Inflector", Class.new)
+
+        if defined?(Dry::Inflector)
+          @before_dry_inflector = Dry::Inflector
+          Dry.send(:remove_const, :Inflector)
+        end
+      end
+
+      after do
+        if @before_dry_inflector
+          Dry.const_set(:Inflector, @before_dry_inflector)
+        end
       end
 
       it { is_expected.to eq(ActiveSupport::Inflector) }
@@ -26,12 +38,43 @@ RSpec.describe SiteMaps::Primitive::String do
     context "when Dry::Inflector is available" do
       before do
         stub_const("Dry::Inflector", Class.new)
+
+        if defined?(ActiveSupport::Inflector)
+          @before_active_support_inflector = ActiveSupport::Inflector
+          ActiveSupport.send(:remove_const, :Inflector)
+        end
+      end
+
+      after do
+        if @before_active_support_inflector
+          ActiveSupport.const_set(:Inflector, @before_active_support_inflector)
+        end
       end
 
       it { is_expected.to be_a(Dry::Inflector) }
     end
 
     context "when no inflector is available" do
+      before do
+        if defined?(ActiveSupport::Inflector)
+          @before_active_support_inflector = ActiveSupport::Inflector
+          ActiveSupport.send(:remove_const, :Inflector)
+        end
+        if defined?(Dry::Inflector)
+          @before_dry_inflector = Dry::Inflector
+          Dry.send(:remove_const, :Inflector)
+        end
+      end
+
+      after do
+        if @before_active_support_inflector
+          ActiveSupport.const_set(:Inflector, @before_active_support_inflector)
+        end
+        if @before_dry_inflector
+          Dry.const_set(:Inflector, @before_dry_inflector)
+        end
+      end
+
       it { is_expected.to be_nil }
     end
   end

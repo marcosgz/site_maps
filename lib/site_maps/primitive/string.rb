@@ -37,7 +37,7 @@ module SiteMaps::Primitive
     end
 
     def underscore
-      new_str = inflector&.underscore(self) || sub(/^::/, "")
+      new_str = sub(/^::/, "")
         .gsub("::", "/")
         .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
         .gsub(/([a-z\d])([A-Z])/, '\1_\2')
