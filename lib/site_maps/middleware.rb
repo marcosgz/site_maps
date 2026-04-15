@@ -7,10 +7,6 @@ module SiteMaps
     URLSET_XSL_PATH = "/_sitemap-stylesheet.xsl"
     INDEX_XSL_PATH = "/_sitemap-index-stylesheet.xsl"
 
-    # Matches sitemap filenames with page 0 or 1 suffix for redirect normalization
-    # e.g., "sitemap0.xml" → "sitemap.xml", "posts1.xml.gz" → "posts.xml.gz"
-    PAGE_NORMALIZE_RE = /\A(.+?)(?:0|1)(\.(xml|xml\.gz))\z/
-
     # @param adapter [Object, #call, nil] Adapter instance, a callable (0-arg or 1-arg
     #   receiving the Rack env) that returns an adapter, or nil to fall back to
     #   SiteMaps.current_adapter.
@@ -64,11 +60,7 @@ module SiteMaps
         # Prepend storage prefix to get the internal path used for adapter lookups
         internal_path = stripped && prepend_prefix(stripped, sto_prefix)
 
-        if internal_path && current_adapter && (redirect = normalize_path(internal_path, current_adapter))
-          # Convert internal redirect back to public path
-          public_redirect = "#{pub_prefix}#{strip_prefix(redirect, sto_prefix)}"
-          redirect_to(public_redirect)
-        elsif internal_path && current_adapter && sitemap_request?(internal_path, current_adapter)
+        if internal_path && current_adapter && sitemap_request?(internal_path, current_adapter)
           serve_sitemap(internal_path, current_adapter, pub_prefix: pub_prefix, sto_prefix: sto_prefix)
         else
           @app.call(env)
@@ -126,28 +118,6 @@ module SiteMaps
 
     def xsl_request?(path)
       path == URLSET_XSL_PATH || path == INDEX_XSL_PATH
-    end
-
-    # Returns the normalized path if a redirect is needed, nil otherwise.
-    # Normalizes page 0 and page 1 to the base sitemap URL (Yoast-style).
-    def normalize_path(path, adapter)
-      return unless sitemap_request?(path, adapter)
-
-      basename = File.basename(path)
-      match = PAGE_NORMALIZE_RE.match(basename)
-      return unless match
-
-      dir = File.dirname(path)
-      normalized = if dir == "/"
-        "/#{match[1]}#{match[2]}"
-      else
-        "#{dir}/#{match[1]}#{match[2]}"
-      end
-      normalized unless normalized == path
-    end
-
-    def redirect_to(path)
-      [301, {"location" => path, "content-type" => "text/html"}, ["Moved Permanently"]]
     end
 
     def serve_sitemap(path, adapter, pub_prefix: nil, sto_prefix: nil)

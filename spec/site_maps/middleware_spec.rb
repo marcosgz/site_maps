@@ -79,52 +79,6 @@ RSpec.describe SiteMaps::Middleware do
       end
     end
 
-    context "with URL normalization redirects" do
-      it "redirects sitemap0.xml to sitemap.xml with 301" do
-        env = {"PATH_INFO" => "/sitemap0.xml", "REQUEST_METHOD" => "GET"}
-        status, headers, _body = middleware.call(env)
-
-        expect(status).to eq(301)
-        expect(headers["location"]).to eq("/sitemap.xml")
-      end
-
-      it "redirects sitemap1.xml to sitemap.xml with 301" do
-        env = {"PATH_INFO" => "/sitemap1.xml", "REQUEST_METHOD" => "GET"}
-        status, headers, _body = middleware.call(env)
-
-        expect(status).to eq(301)
-        expect(headers["location"]).to eq("/sitemap.xml")
-      end
-
-      it "redirects posts0.xml.gz to posts.xml.gz" do
-        env = {"PATH_INFO" => "/posts0.xml.gz", "REQUEST_METHOD" => "GET"}
-        status, headers, _body = middleware.call(env)
-
-        expect(status).to eq(301)
-        expect(headers["location"]).to eq("/posts.xml.gz")
-      end
-
-      it "does not redirect sitemap2.xml" do
-        allow(adapter).to receive(:read).and_raise(SiteMaps::FileNotFoundError)
-
-        env = {"PATH_INFO" => "/sitemap2.xml", "REQUEST_METHOD" => "GET"}
-        status, headers, _body = middleware.call(env)
-
-        expect(status).to eq(404)
-        expect(headers).not_to include("location")
-      end
-
-      it "does not redirect the base sitemap.xml" do
-        allow(adapter).to receive(:read).and_return(["<xml/>", {content_type: "application/xml"}])
-
-        env = {"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET"}
-        status, headers, _body = middleware.call(env)
-
-        expect(status).to eq(200)
-        expect(headers).not_to include("location")
-      end
-    end
-
     context "with a callable adapter" do
       let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
       let(:middleware) do
@@ -189,14 +143,6 @@ RSpec.describe SiteMaps::Middleware do
         expect(status).to eq(404)
         expect(body).to eq(["Not Found"])
       end
-
-      it "includes prefix in redirect location" do
-        env = {"PATH_INFO" => "/sitemaps/example/sitemap0.xml", "REQUEST_METHOD" => "GET"}
-        status, headers, _body = middleware.call(env)
-
-        expect(status).to eq(301)
-        expect(headers["location"]).to eq("/sitemaps/example/sitemap.xml")
-      end
     end
 
     context "with storage_prefix (sitemaps stored under a path, served at a shorter public URL)" do
@@ -218,14 +164,6 @@ RSpec.describe SiteMaps::Middleware do
         expect(status).to eq(200)
         expect(headers["content-type"]).to eq("text/xml; charset=UTF-8")
         expect(storage_adapter).to have_received(:read).with("https://example.com/sitemaps/example/sitemap.xml")
-      end
-
-      it "redirects with storage prefix stripped from location" do
-        env = {"PATH_INFO" => "/sitemap0.xml", "REQUEST_METHOD" => "GET"}
-        status, headers, _body = middleware.call(env)
-
-        expect(status).to eq(301)
-        expect(headers["location"]).to eq("/sitemap.xml")
       end
 
       it "rewrites <loc> URLs in the served XML to strip the storage prefix" do
