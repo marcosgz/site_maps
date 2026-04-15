@@ -42,6 +42,8 @@ module SiteMaps
     attribute :emit_changefreq, default: true
     attribute :xsl_stylesheet_url
     attribute :xsl_index_stylesheet_url
+    attribute :ping_search_engines, default: false
+    attribute :ping_engines
 
     def initialize(**options)
       default_attributes.merge(options).each do |key, value|

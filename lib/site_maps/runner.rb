@@ -93,6 +93,14 @@ module SiteMaps
         raw_data = adapter.sitemap_index.to_xml
         adapter.write(adapter.config.url, raw_data, last_modified: adapter.sitemap_index.last_modified)
       end
+      ping_search_engines if adapter.config.respond_to?(:ping_search_engines?) && adapter.config.ping_search_engines?
+    end
+
+    def ping_search_engines
+      engines = adapter.config.respond_to?(:ping_engines) ? adapter.config.ping_engines : nil
+      SiteMaps::Notification.instrument("sitemaps.ping") do |payload|
+        payload[:results] = SiteMaps::Ping.ping(adapter.config.url, engines: engines)
+      end
     end
 
     def fail_with_errors!
