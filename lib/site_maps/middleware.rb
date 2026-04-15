@@ -7,6 +7,10 @@ module SiteMaps
     URLSET_XSL_PATH = "/_sitemap-stylesheet.xsl"
     INDEX_XSL_PATH = "/_sitemap-index-stylesheet.xsl"
 
+    # Matches sitemap filenames with page 0 or 1 suffix for redirect normalization
+    # e.g., "sitemap0.xml" → "sitemap.xml", "posts1.xml.gz" → "posts.xml.gz"
+    PAGE_NORMALIZE_RE = /\A(.+?)(?:0|1)(\.(xml|xml\.gz))\z/
+
     def initialize(app, adapter: nil, x_robots_tag: DEFAULT_X_ROBOTS_TAG, cache_control: DEFAULT_CACHE_CONTROL)
       @app = app
       @adapter = adapter
@@ -19,6 +23,8 @@ module SiteMaps
 
       if xsl_request?(path)
         serve_xsl(path)
+      elsif (redirect = normalize_path(path))
+        redirect_to(redirect)
       elsif sitemap_request?(path)
         serve_sitemap(path)
       else
@@ -40,6 +46,28 @@ module SiteMaps
 
     def xsl_request?(path)
       path == URLSET_XSL_PATH || path == INDEX_XSL_PATH
+    end
+
+    # Returns the normalized path if a redirect is needed, nil otherwise.
+    # Normalizes page 0 and page 1 to the base sitemap URL (Yoast-style).
+    def normalize_path(path)
+      return unless sitemap_request?(path)
+
+      basename = File.basename(path)
+      match = PAGE_NORMALIZE_RE.match(basename)
+      return unless match
+
+      dir = File.dirname(path)
+      normalized = if dir == "/"
+        "/#{match[1]}#{match[2]}"
+      else
+        "#{dir}/#{match[1]}#{match[2]}"
+      end
+      normalized unless normalized == path
+    end
+
+    def redirect_to(path)
+      [301, {"location" => path, "content-type" => "text/html"}, ["Moved Permanently"]]
     end
 
     def serve_sitemap(path)
