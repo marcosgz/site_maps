@@ -162,7 +162,7 @@ Execute multiple times with different parameters. The location supports `%{place
 SiteMaps.use(:file_system) do
   config.url = "https://example.com/sitemap.xml"
 
-  process :posts, "posts/%{year}-%{month}/sitemap.xml", year: Date.today.year, month: Date.today.month do |s, year:, month:|
+  process :posts, "posts/%{year}-%{month}/sitemap.xml", year: Date.today.year, month: Date.today.month do |s, year:, month:, **|
     Post.where(year: year.to_i, month: month.to_i).find_each do |post|
       s.add(post_path(post), lastmod: post.updated_at)
     end
@@ -201,7 +201,7 @@ The `context:` value must be a `Hash`. Its keys are passed as keyword arguments 
 
 ```ruby
 # config/sitemap.rb
-SiteMaps.define do |site:|
+SiteMaps.define do |site:, **|
   use(:file_system) do
     configure do |config|
       config.url = "https://#{site.domain}/sitemap.xml"
