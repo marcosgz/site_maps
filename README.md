@@ -239,6 +239,47 @@ end
 SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site, locale: "en"}).run
 ```
 
+### Serving with Rack Middleware
+
+`SiteMaps::Middleware` supports multi-tenant setups via a callable `adapter:`. Because the adapter is resolved per-request, you can derive it from thread-local state set by an upstream middleware (e.g. `Current.site`):
+
+```ruby
+# Insert after your multitenancy middleware so Current.site is already set
+Rails.application.middleware.insert_after MultitenancyMiddleware, SiteMaps::Middleware,
+  adapter: -> {
+    site = Current.site
+    next unless site
+
+    SiteMaps::Adapters::FileSystem.new(url: site.sitemap_url, directory: "tmp/")
+  }
+```
+
+Both `adapter:` and the prefix options accept a 0-arg lambda (reads thread-local state) or a 1-arg lambda (receives the Rack `env`).
+
+#### Path mapping options
+
+Use these when the public URL path and the storage path differ:
+
+| Option | Direction | Example |
+|---|---|---|
+| `public_prefix:` | Public URL has an extra prefix → strip it to find the file | Stored at `/sitemap.xml`, served at `/sitemaps/tenant/sitemap.xml` |
+| `storage_prefix:` | Storage has an extra prefix → prepend it to the public path | Stored at `/sitemaps/tenant/sitemap.xml`, served at `/sitemap.xml` |
+
+```ruby
+# Sitemaps stored at /sitemaps/{slug}/sitemap.xml, served at /sitemap.xml
+# (subdomain identifies the tenant, no prefix needed in the public URL)
+Rails.application.middleware.insert_after MultitenancyMiddleware, SiteMaps::Middleware,
+  storage_prefix: -> { site = Current.site; "/sitemaps/#{site.slug}" if site },
+  adapter: -> { ... }
+
+# Sitemaps stored at root, served at /sitemaps/{slug}/sitemap.xml
+Rails.application.middleware.insert_after MultitenancyMiddleware, SiteMaps::Middleware,
+  public_prefix: -> { site = Current.site; "/sitemaps/#{site.slug}" if site },
+  adapter: -> { ... }
+```
+
+XSL stylesheet requests (`/_sitemap-stylesheet.xsl`, `/_sitemap-index-stylesheet.xsl`) are served directly without resolving the adapter or prefix.
+
 ### Thread safety
 
 `SiteMaps.generate(config_file:, context:)` is thread-safe. Each call uses a thread-local scope to isolate adapter construction during `load(config_file)`, so concurrent calls from different threads don't race on module-level state:
@@ -488,6 +529,8 @@ run MyApp
 ```ruby
 use SiteMaps::Middleware,
   adapter: SiteMaps.current_adapter,        # defaults to SiteMaps.current_adapter
+  public_prefix: nil,                       # strip this prefix from the public URL before lookup
+  storage_prefix: nil,                      # prepend this prefix to the public URL for storage lookup
   x_robots_tag: "noindex, follow",          # default
   cache_control: "public, max-age=3600"     # default
 ```

@@ -164,11 +164,11 @@ RSpec.describe SiteMaps::Middleware do
       end
     end
 
-    context "with a static path_prefix" do
+    context "with public_prefix (sitemaps stored at root, served under a longer public path)" do
       let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
       let(:middleware) do
         dir = fixtures_dir
-        described_class.new(inner_app, path_prefix: "/sitemaps/example", adapter: SiteMaps.use(:file_system) {
+        described_class.new(inner_app, public_prefix: "/sitemaps/example", adapter: SiteMaps.use(:file_system) {
           config.url = "https://example.com/sitemap.xml"
           config.directory = dir
         })
@@ -199,7 +199,37 @@ RSpec.describe SiteMaps::Middleware do
       end
     end
 
-    context "with a callable path_prefix" do
+    context "with storage_prefix (sitemaps stored under a path, served at a shorter public URL)" do
+      let(:storage_adapter) do
+        SiteMaps.use(:noop) { config.url = "https://example.com/sitemaps/example/sitemap.xml" }
+      end
+      let(:middleware) do
+        described_class.new(inner_app, storage_prefix: "/sitemaps/example", adapter: storage_adapter)
+      end
+
+      before do
+        allow(storage_adapter).to receive(:read).and_return(["<urlset/>", {}])
+      end
+
+      it "serves sitemaps at the public root path" do
+        env = {"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET"}
+        status, headers, _body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(headers["content-type"]).to eq("text/xml; charset=UTF-8")
+        expect(storage_adapter).to have_received(:read).with("https://example.com/sitemaps/example/sitemap.xml")
+      end
+
+      it "redirects with storage prefix stripped from location" do
+        env = {"PATH_INFO" => "/sitemap0.xml", "REQUEST_METHOD" => "GET"}
+        status, headers, _body = middleware.call(env)
+
+        expect(status).to eq(301)
+        expect(headers["location"]).to eq("/sitemap.xml")
+      end
+    end
+
+    context "with a callable public_prefix" do
       let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
       let(:middleware) do
         dir = fixtures_dir
@@ -210,7 +240,7 @@ RSpec.describe SiteMaps::Middleware do
               config.directory = dir
             end
           },
-          path_prefix: ->(env) { "/sitemaps/#{env["HTTP_HOST"]}" })
+          public_prefix: ->(env) { "/sitemaps/#{env["HTTP_HOST"]}" })
       end
 
       it "resolves prefix per request" do

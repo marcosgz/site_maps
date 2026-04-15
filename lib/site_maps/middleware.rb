@@ -11,17 +11,39 @@ module SiteMaps
     # e.g., "sitemap0.xml" → "sitemap.xml", "posts1.xml.gz" → "posts.xml.gz"
     PAGE_NORMALIZE_RE = /\A(.+?)(?:0|1)(\.(xml|xml\.gz))\z/
 
-    # @param adapter [Object, #call, nil] Adapter instance, a callable that receives
-    #   the Rack env and returns an adapter (for multi-tenant use), or nil to use
+    # @param adapter [Object, #call, nil] Adapter instance, a callable (0-arg or 1-arg
+    #   receiving the Rack env) that returns an adapter, or nil to fall back to
     #   SiteMaps.current_adapter.
-    # @param path_prefix [String, #call, nil] A path prefix to strip from incoming
-    #   requests before matching sitemap paths. Useful for multi-tenant setups where
-    #   sitemaps are served under a tenant-specific path (e.g. "/sitemaps/tenant-slug").
-    #   Can be a callable that receives the Rack env and returns a string or nil.
-    def initialize(app, adapter: nil, path_prefix: nil, x_robots_tag: DEFAULT_X_ROBOTS_TAG, cache_control: DEFAULT_CACHE_CONTROL)
+    #
+    # @param public_prefix [String, #call, nil] A prefix present in the **public URL**
+    #   that is absent from the storage path. Stripped from the incoming request path
+    #   to derive the internal lookup path.
+    #
+    #   Example: sitemaps stored at `/sitemap.xml`, served publicly at
+    #   `/sitemaps/tenant/sitemap.xml` → `public_prefix: "/sitemaps/tenant"`
+    #
+    # @param storage_prefix [String, #call, nil] A prefix present in the **storage
+    #   path** that is absent from the public URL. Prepended to the incoming request
+    #   path to derive the internal lookup path.
+    #
+    #   Example: sitemaps stored at `/sitemaps/tenant/sitemap.xml`, served publicly at
+    #   `/sitemap.xml` → `storage_prefix: "/sitemaps/tenant"`
+    #
+    # Both options accept a callable (0-arg or 1-arg receiving env), which is useful
+    # in multi-tenant setups where the prefix depends on the current request/site.
+    #
+    def initialize(
+      app,
+      adapter: nil,
+      public_prefix: nil,
+      storage_prefix: nil,
+      x_robots_tag: DEFAULT_X_ROBOTS_TAG,
+      cache_control: DEFAULT_CACHE_CONTROL
+    )
       @app = app
       @adapter = adapter
-      @path_prefix = path_prefix
+      @public_prefix = public_prefix
+      @storage_prefix = storage_prefix
       @x_robots_tag = x_robots_tag
       @cache_control = cache_control
     end
@@ -33,11 +55,19 @@ module SiteMaps
         serve_xsl(path)
       else
         current_adapter = resolve_adapter(env)
-        prefix = resolve_prefix(env)
-        internal_path = strip_prefix(path, prefix)
+        pub_prefix = resolve_value(@public_prefix, env)
+        sto_prefix = resolve_value(@storage_prefix, env)
+
+        # Strip public prefix (nil = no match when prefix is configured but doesn't match)
+        stripped = strip_prefix(path, pub_prefix)
+
+        # Prepend storage prefix to get the internal path used for adapter lookups
+        internal_path = stripped && prepend_prefix(stripped, sto_prefix)
 
         if internal_path && current_adapter && (redirect = normalize_path(internal_path, current_adapter))
-          redirect_to("#{prefix}#{redirect}")
+          # Convert internal redirect back to public path
+          public_redirect = "#{pub_prefix}#{strip_prefix(redirect, sto_prefix)}"
+          redirect_to(public_redirect)
         elsif internal_path && current_adapter && sitemap_request?(internal_path, current_adapter)
           serve_sitemap(internal_path, current_adapter)
         else
@@ -56,27 +86,36 @@ module SiteMaps
       end
     end
 
-    def resolve_prefix(env)
-      prefix = @path_prefix.respond_to?(:call) ? call_with_env(@path_prefix, env) : @path_prefix
-      prefix&.chomp("/")
+    # Resolves a string-or-callable option, normalising the trailing slash.
+    def resolve_value(option, env)
+      value = option.respond_to?(:call) ? call_with_env(option, env) : option
+      value&.chomp("/")
     end
 
-    # Calls a callable with env if it accepts an argument, otherwise calls it
-    # with no arguments. This allows both `-> { Current.site }` (0-arg, useful
-    # when upstream middleware already set thread-local state) and
-    # `->(env) { ... }` (1-arg) forms.
+    # Calls a callable with env if it accepts an argument, otherwise with no
+    # arguments. Supports both `-> { Current.site }` (0-arg, when upstream
+    # middleware already set thread-local state) and `->(env) { ... }` (1-arg).
     def call_with_env(callable, env)
       callable.arity.zero? ? callable.call : callable.call(env)
     end
 
-    # Returns the path with the prefix stripped, nil if the prefix is set but
-    # doesn't match, or the original path when no prefix is configured.
+    # Returns the path with the prefix stripped.
+    # Returns nil  when a prefix is configured but the path doesn't start with it
+    # (so the middleware can pass through non-matching requests).
+    # Returns the original path when no prefix is configured.
     def strip_prefix(path, prefix)
       return path if prefix.nil? || prefix.empty?
       return nil unless path.start_with?(prefix)
 
       stripped = path[prefix.length..]
       stripped.start_with?("/") ? stripped : "/#{stripped}"
+    end
+
+    # Prepends a storage prefix to a path. A nil/empty prefix is a no-op.
+    def prepend_prefix(path, prefix)
+      return path if prefix.nil? || prefix.empty?
+
+      "#{prefix}#{path}"
     end
 
     def sitemap_request?(path, adapter)
