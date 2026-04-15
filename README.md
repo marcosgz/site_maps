@@ -195,11 +195,13 @@ Split files are named sequentially: `sitemap1.xml`, `sitemap2.xml`, etc.
 
 ## Multi-Tenant Configuration
 
-For multi-tenant applications where each site has its own config file but shares a dynamic context (like a `Site` model loaded from the database), use `SiteMaps.define` with the `context:` kwarg:
+For multi-tenant applications where each site shares a config file but needs runtime context (like a `Site` model loaded from the database), use `SiteMaps.define` with the `context:` kwarg.
+
+The `context:` value must be a `Hash`. Its keys are passed as keyword arguments to the `define` block:
 
 ```ruby
-# config/sites/site1/sitemap.rb
-SiteMaps.define do |site|
+# config/sitemap.rb
+SiteMaps.define do |site:|
   use(:file_system) do
     configure do |config|
       config.url = "https://#{site.domain}/sitemap.xml"
@@ -218,24 +220,23 @@ end
 ```
 
 ```ruby
-# Usage — iterate sites and load their respective config
+# Usage — iterate sites, each gets its own isolated adapter
 Site.find_each do |site|
-  config_file = Rails.root.join("config/sites/#{site.slug}/sitemap.rb")
-  SiteMaps.generate(config_file: config_file, context: site).enqueue_all.run
+  SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site}).enqueue_all.run
 end
 ```
 
-Multiple context args can be passed as an array:
+Multiple context values are passed as additional Hash keys:
 
 ```ruby
-SiteMaps.define do |site, locale|
+SiteMaps.define do |site:, locale:|
   use(:file_system) do
     config.url = "https://#{site.domain}/#{locale}/sitemap.xml"
     # ...
   end
 end
 
-SiteMaps.generate(config_file: "config/sitemap.rb", context: [site, "en"]).run
+SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site, locale: "en"}).run
 ```
 
 ### Thread safety
@@ -245,8 +246,7 @@ SiteMaps.generate(config_file: "config/sitemap.rb", context: [site, "en"]).run
 ```ruby
 Site.find_each.map do |site|
   Thread.new do
-    config_file = Rails.root.join("config/sites/#{site.slug}/sitemap.rb")
-    SiteMaps.generate(config_file: config_file, context: site).enqueue_all.run
+    SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site}).enqueue_all.run
   end
 end.each(&:join)
 ```

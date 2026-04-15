@@ -143,17 +143,17 @@ RSpec.describe SiteMaps do
       end
     end
 
-    it "accepts multiple context args as an array" do
+    it "accepts multiple kwargs from a Hash context" do
       path = File.join(Dir.tmpdir, "multi_context_#{SecureRandom.hex(4)}.rb")
       File.write(path, <<~RUBY)
-        SiteMaps.define do |site, locale|
+        SiteMaps.define do |site:, locale:|
           use(:noop) do
             config.url = "https://\#{site[:domain]}/\#{locale}/sitemap.xml"
           end
         end
       RUBY
 
-      runner = described_class.generate(config_file: path, context: [{domain: "example.com"}, "en"])
+      runner = described_class.generate(config_file: path, context: {site: {domain: "example.com"}, locale: "en"})
 
       expect(runner.adapter.config.url).to eq("https://example.com/en/sitemap.xml")
     ensure

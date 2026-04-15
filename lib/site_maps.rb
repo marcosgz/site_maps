@@ -77,11 +77,12 @@ module SiteMaps
     end
 
     # Register a context-aware sitemap definition. The block is stored and
-    # called when {.generate} is invoked with a `context:` argument.
+    # called when {.generate} is invoked with a `context:` hash. The hash
+    # keys are passed as keyword arguments to the block.
     #
     # Example:
     #   # config/sitemap.rb
-    #   SiteMaps.define do |site|
+    #   SiteMaps.define do |site:|
     #     use(:file_system) do
     #       config.url = "https://#{site.domain}/sitemap.xml"
     #       process { |s| site.pages.each { |p| s.add(p.path) } }
@@ -89,9 +90,11 @@ module SiteMaps
     #   end
     #
     #   # Usage:
-    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: site).enqueue_all.run
+    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site})
+    #     .enqueue_all
+    #     .run
     #
-    # @param block [Proc] Receives the context argument(s) passed to {.generate}
+    # @param block [Proc] Receives keyword arguments from the `context:` hash
     def define(&block)
       if (scope = Thread.current[SCOPE_KEY])
         scope[:definition] = block
@@ -125,16 +128,17 @@ module SiteMaps
     #     .run
     #
     # For multi-tenant / context-aware configurations, the config file can
-    # use {.define} and pass runtime context via the `context:` kwarg:
+    # use {.define} and pass runtime context as keyword arguments via the
+    # `context:` kwarg:
     #
     # Example:
-    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: site)
+    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site})
     #     .enqueue_all
     #     .run
     #
     # @param config_file [String] The path to a configuration file
-    # @param context [Object, Array] Value(s) passed to the block registered
-    #   via {.define}. Arrays are splatted as positional arguments.
+    # @param context [Hash] Keyword arguments passed to the block registered
+    #   via {.define}. Must be a Hash (or nil for no context).
     # @param options [Hash] Options to pass to the runner
     # @return [Runner] An instance of the runner
     def generate(config_file: nil, context: nil, **options)
@@ -146,8 +150,10 @@ module SiteMaps
         begin
           load(config_file)
           if scope[:definition]
-            args = context.is_a?(Array) ? context : [context].compact
-            instance_exec(*args, &scope[:definition])
+            kwargs = context || {}
+            raise ArgumentError, "context: must be a Hash, got #{context.class}" unless kwargs.is_a?(Hash)
+
+            instance_exec(**kwargs, &scope[:definition])
           end
           adapter = scope[:adapter]
         ensure
