@@ -49,8 +49,7 @@ module SiteMaps
 
       if xsl_request?(path)
         serve_xsl(path)
-      else
-        current_adapter = resolve_adapter(env)
+      elsif path.end_with?(".xml", ".xml.gz")
         pub_prefix = resolve_value(@public_prefix, env)
         sto_prefix = resolve_value(@storage_prefix, env)
 
@@ -60,11 +59,16 @@ module SiteMaps
         # Prepend storage prefix to get the internal path used for adapter lookups
         internal_path = stripped && prepend_prefix(stripped, sto_prefix)
 
-        if internal_path && current_adapter && sitemap_request?(internal_path, current_adapter)
+        # Only resolve the adapter (potentially expensive: DB lookup, callable) when
+        # the path already looks like a sitemap file and passed prefix checks.
+        current_adapter = resolve_adapter(env) if internal_path
+        if current_adapter && sitemap_request?(internal_path, current_adapter)
           serve_sitemap(internal_path, current_adapter, pub_prefix: pub_prefix, sto_prefix: sto_prefix)
         else
           @app.call(env)
         end
+      else
+        @app.call(env)
       end
     end
 
