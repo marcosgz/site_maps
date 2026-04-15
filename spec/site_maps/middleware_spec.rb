@@ -164,6 +164,72 @@ RSpec.describe SiteMaps::Middleware do
       end
     end
 
+    context "with a static path_prefix" do
+      let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
+      let(:middleware) do
+        dir = fixtures_dir
+        described_class.new(inner_app, path_prefix: "/sitemaps/example", adapter: SiteMaps.use(:file_system) {
+          config.url = "https://example.com/sitemap.xml"
+          config.directory = dir
+        })
+      end
+
+      it "serves sitemaps under the prefixed path" do
+        env = {"PATH_INFO" => "/sitemaps/example/sitemap.xml", "REQUEST_METHOD" => "GET"}
+        status, headers, _body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(headers["content-type"]).to eq("text/xml; charset=UTF-8")
+      end
+
+      it "passes through requests that don't match the prefix" do
+        env = {"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET"}
+        status, _headers, body = middleware.call(env)
+
+        expect(status).to eq(404)
+        expect(body).to eq(["Not Found"])
+      end
+
+      it "includes prefix in redirect location" do
+        env = {"PATH_INFO" => "/sitemaps/example/sitemap0.xml", "REQUEST_METHOD" => "GET"}
+        status, headers, _body = middleware.call(env)
+
+        expect(status).to eq(301)
+        expect(headers["location"]).to eq("/sitemaps/example/sitemap.xml")
+      end
+    end
+
+    context "with a callable path_prefix" do
+      let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
+      let(:middleware) do
+        dir = fixtures_dir
+        described_class.new(inner_app,
+          adapter: ->(env) {
+            SiteMaps.use(:file_system) do
+              config.url = "https://#{env["HTTP_HOST"]}/sitemap.xml"
+              config.directory = dir
+            end
+          },
+          path_prefix: ->(env) { "/sitemaps/#{env["HTTP_HOST"]}" })
+      end
+
+      it "resolves prefix per request" do
+        env = {"PATH_INFO" => "/sitemaps/tenant.com/sitemap.xml", "REQUEST_METHOD" => "GET", "HTTP_HOST" => "tenant.com"}
+        status, headers, _body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(headers["content-type"]).to eq("text/xml; charset=UTF-8")
+      end
+
+      it "passes through when path does not match resolved prefix" do
+        env = {"PATH_INFO" => "/sitemaps/other.com/sitemap.xml", "REQUEST_METHOD" => "GET", "HTTP_HOST" => "tenant.com"}
+        status, _headers, body = middleware.call(env)
+
+        expect(status).to eq(404)
+        expect(body).to eq(["Not Found"])
+      end
+    end
+
     context "with custom headers" do
       let(:middleware) do
         described_class.new(inner_app, adapter: adapter, x_robots_tag: "noindex", cache_control: "private")

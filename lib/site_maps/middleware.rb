@@ -14,9 +14,14 @@ module SiteMaps
     # @param adapter [Object, #call, nil] Adapter instance, a callable that receives
     #   the Rack env and returns an adapter (for multi-tenant use), or nil to use
     #   SiteMaps.current_adapter.
-    def initialize(app, adapter: nil, x_robots_tag: DEFAULT_X_ROBOTS_TAG, cache_control: DEFAULT_CACHE_CONTROL)
+    # @param path_prefix [String, #call, nil] A path prefix to strip from incoming
+    #   requests before matching sitemap paths. Useful for multi-tenant setups where
+    #   sitemaps are served under a tenant-specific path (e.g. "/sitemaps/tenant-slug").
+    #   Can be a callable that receives the Rack env and returns a string or nil.
+    def initialize(app, adapter: nil, path_prefix: nil, x_robots_tag: DEFAULT_X_ROBOTS_TAG, cache_control: DEFAULT_CACHE_CONTROL)
       @app = app
       @adapter = adapter
+      @path_prefix = path_prefix
       @x_robots_tag = x_robots_tag
       @cache_control = cache_control
     end
@@ -28,10 +33,13 @@ module SiteMaps
         serve_xsl(path)
       else
         current_adapter = resolve_adapter(env)
-        if current_adapter && (redirect = normalize_path(path, current_adapter))
-          redirect_to(redirect)
-        elsif current_adapter && sitemap_request?(path, current_adapter)
-          serve_sitemap(path, current_adapter)
+        prefix = resolve_prefix(env)
+        internal_path = strip_prefix(path, prefix)
+
+        if internal_path && current_adapter && (redirect = normalize_path(internal_path, current_adapter))
+          redirect_to("#{prefix}#{redirect}")
+        elsif internal_path && current_adapter && sitemap_request?(internal_path, current_adapter)
+          serve_sitemap(internal_path, current_adapter)
         else
           @app.call(env)
         end
@@ -46,6 +54,21 @@ module SiteMaps
       else
         @adapter || SiteMaps.current_adapter
       end
+    end
+
+    def resolve_prefix(env)
+      prefix = @path_prefix.respond_to?(:call) ? @path_prefix.call(env) : @path_prefix
+      prefix&.chomp("/")
+    end
+
+    # Returns the path with the prefix stripped, nil if the prefix is set but
+    # doesn't match, or the original path when no prefix is configured.
+    def strip_prefix(path, prefix)
+      return path if prefix.nil? || prefix.empty?
+      return nil unless path.start_with?(prefix)
+
+      stripped = path[prefix.length..]
+      stripped.start_with?("/") ? stripped : "/#{stripped}"
     end
 
     def sitemap_request?(path, adapter)
