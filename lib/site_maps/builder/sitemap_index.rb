@@ -41,8 +41,24 @@ module SiteMaps::Builder
       io.string
     end
 
+    def last_modified
+      dates = @sitemaps.filter_map { |s| parse_lastmod(s.lastmod) }
+      dates.max || Time.now
+    end
+
     def empty?
       @sitemaps.empty?
+    end
+
+    private
+
+    def parse_lastmod(value)
+      case value
+      when Time then value
+      when String then Time.parse(value)
+      end
+    rescue ArgumentError
+      nil
     end
   end
 end

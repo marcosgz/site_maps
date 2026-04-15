@@ -91,7 +91,7 @@ module SiteMaps
       end
       unless adapter.sitemap_index.empty?
         raw_data = adapter.sitemap_index.to_xml
-        adapter.write(adapter.config.url, raw_data, last_modified: Time.now)
+        adapter.write(adapter.config.url, raw_data, last_modified: adapter.sitemap_index.last_modified)
       end
     end
 

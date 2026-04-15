@@ -48,6 +48,37 @@ RSpec.describe SiteMaps::Builder::SitemapIndex do
     end
   end
 
+  describe "#last_modified" do
+    it "returns the most recent lastmod from children" do
+      sitemap_index = described_class.new
+      sitemap_index.add("https://example.com/sitemap1.xml", lastmod: Time.new(2024, 1, 1))
+      sitemap_index.add("https://example.com/sitemap2.xml", lastmod: Time.new(2024, 6, 15))
+      sitemap_index.add("https://example.com/sitemap3.xml", lastmod: Time.new(2024, 3, 1))
+
+      expect(sitemap_index.last_modified).to eq(Time.new(2024, 6, 15))
+    end
+
+    it "parses string dates" do
+      sitemap_index = described_class.new
+      sitemap_index.add("https://example.com/sitemap1.xml", lastmod: "2024-07-01T03:37:09-05:00")
+
+      expect(sitemap_index.last_modified).to eq(Time.parse("2024-07-01T03:37:09-05:00"))
+    end
+
+    it "falls back to Time.now when no lastmod is set" do
+      sitemap_index = described_class.new
+      sitemap_index.add("https://example.com/sitemap.xml")
+
+      expect(sitemap_index.last_modified).to be_within(1).of(Time.now)
+    end
+
+    it "falls back to Time.now when empty" do
+      sitemap_index = described_class.new
+
+      expect(sitemap_index.last_modified).to be_within(1).of(Time.now)
+    end
+  end
+
   describe "xsl_url support" do
     it "includes the XSL processing instruction when xsl_url is set" do
       sitemap_index = described_class.new(xsl_url: "https://example.com/index-style.xsl")
