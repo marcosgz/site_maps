@@ -66,6 +66,26 @@ module SiteMaps
       @current_adapter = adapter_class.new(**options, &block)
     end
 
+    # Register a context-aware sitemap definition. The block is stored and
+    # called when {.generate} is invoked with a `context:` argument.
+    #
+    # Example:
+    #   # config/sitemap.rb
+    #   SiteMaps.define do |site|
+    #     use(:file_system) do
+    #       config.url = "https://#{site.domain}/sitemap.xml"
+    #       process { |s| site.pages.each { |p| s.add(p.path) } }
+    #     end
+    #   end
+    #
+    #   # Usage:
+    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: site).enqueue_all.run
+    #
+    # @param block [Proc] Receives the context argument(s) passed to {.generate}
+    def define(&block)
+      @definition = block
+    end
+
     def config
       @config ||= Configuration.new
       yield(@config) if block_given?
@@ -90,13 +110,28 @@ module SiteMaps
     #     .enqueue_remaining # Enqueue all other non-enqueued processes
     #     .run
     #
+    # For multi-tenant / context-aware configurations, the config file can
+    # use {.define} and pass runtime context via the `context:` kwarg:
+    #
+    # Example:
+    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: site)
+    #     .enqueue_all
+    #     .run
+    #
     # @param config_file [String] The path to a configuration file
+    # @param context [Object, Array] Value(s) passed to the block registered
+    #   via {.define}. Arrays are splatted as positional arguments.
     # @param options [Hash] Options to pass to the runner
     # @return [Runner] An instance of the runner
-    def generate(config_file: nil, **options)
+    def generate(config_file: nil, context: nil, **options)
       if config_file
         @current_adapter = nil
+        @definition = nil
         load(config_file)
+        if @definition
+          args = context.is_a?(Array) ? context : [context].compact
+          instance_exec(*args, &@definition)
+        end
       end
       raise AdapterNotSetError, "No adapter set. Use SiteMaps.use to set an adapter" unless current_adapter
 

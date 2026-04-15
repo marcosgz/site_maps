@@ -76,6 +76,67 @@ RSpec.describe SiteMaps do
     end
   end
 
+  describe ".define with context" do
+    before do
+      described_class.instance_variable_set(:@current_adapter, nil)
+      described_class.instance_variable_set(:@definition, nil)
+    end
+
+    let(:config_path) do
+      path = File.join(Dir.tmpdir, "context_aware_sitemap_#{SecureRandom.hex(4)}.rb")
+      File.write(path, <<~RUBY)
+        SiteMaps.define do |site|
+          use(:noop) do
+            config.url = "https://\#{site[:domain]}/sitemap.xml"
+            config.directory = site[:directory]
+          end
+        end
+      RUBY
+      path
+    end
+
+    after { File.delete(config_path) if File.exist?(config_path) }
+
+    it "passes context to the definition block" do
+      site = {domain: "example.com", directory: "/tmp/site1"}
+
+      runner = described_class.generate(config_file: config_path, context: site)
+
+      expect(runner.adapter.config.url).to eq("https://example.com/sitemap.xml")
+      expect(runner.adapter.config.directory).to eq("/tmp/site1")
+    end
+
+    it "creates isolated adapters per site" do
+      site_a = {domain: "a.com", directory: "/tmp/a"}
+      site_b = {domain: "b.com", directory: "/tmp/b"}
+
+      runner_a = described_class.generate(config_file: config_path, context: site_a)
+      url_a = runner_a.adapter.config.url
+
+      runner_b = described_class.generate(config_file: config_path, context: site_b)
+
+      expect(url_a).to eq("https://a.com/sitemap.xml")
+      expect(runner_b.adapter.config.url).to eq("https://b.com/sitemap.xml")
+    end
+
+    it "accepts multiple context args as an array" do
+      path = File.join(Dir.tmpdir, "multi_context_#{SecureRandom.hex(4)}.rb")
+      File.write(path, <<~RUBY)
+        SiteMaps.define do |site, locale|
+          use(:noop) do
+            config.url = "https://\#{site[:domain]}/\#{locale}/sitemap.xml"
+          end
+        end
+      RUBY
+
+      runner = described_class.generate(config_file: path, context: [{domain: "example.com"}, "en"])
+
+      expect(runner.adapter.config.url).to eq("https://example.com/en/sitemap.xml")
+    ensure
+      File.delete(path) if File.exist?(path)
+    end
+  end
+
   describe ".logger" do
     it "returns the default logger" do
       expect(described_class.logger).to be_a(Logger)

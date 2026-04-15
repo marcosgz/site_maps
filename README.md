@@ -10,6 +10,7 @@ Generates SEO-optimized XML sitemaps with support for sitemap indexes, XSL style
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Processes](#processes)
+- [Multi-Tenant Configuration](#multi-tenant-configuration)
 - [URL Filtering](#url-filtering)
 - [External Sitemaps](#external-sitemaps)
 - [Sitemap Extensions](#sitemap-extensions)
@@ -191,6 +192,61 @@ Sitemaps are automatically split into multiple files and a sitemap index is gene
 - Uncompressed file size exceeds 50MB.
 
 Split files are named sequentially: `sitemap1.xml`, `sitemap2.xml`, etc.
+
+## Multi-Tenant Configuration
+
+For multi-tenant applications where each site has its own config file but shares a dynamic context (like a `Site` model loaded from the database), use `SiteMaps.define` with the `context:` kwarg:
+
+```ruby
+# config/sites/site1/sitemap.rb
+SiteMaps.define do |site|
+  use(:file_system) do
+    configure do |config|
+      config.url = "https://#{site.domain}/sitemap.xml"
+      config.directory = site.public_path
+    end
+
+    process do |s|
+      site.pages.find_each { |p| s.add(p.path, lastmod: p.updated_at) }
+    end
+
+    process :posts, "posts/sitemap.xml" do |s|
+      site.posts.published.find_each { |p| s.add(p.path, lastmod: p.updated_at) }
+    end
+  end
+end
+```
+
+```ruby
+# Usage — iterate sites and load their respective config
+Site.find_each do |site|
+  config_file = Rails.root.join("config/sites/#{site.slug}/sitemap.rb")
+  SiteMaps.generate(config_file: config_file, context: site).enqueue_all.run
+end
+```
+
+Multiple context args can be passed as an array:
+
+```ruby
+SiteMaps.define do |site, locale|
+  use(:file_system) do
+    config.url = "https://#{site.domain}/#{locale}/sitemap.xml"
+    # ...
+  end
+end
+
+SiteMaps.generate(config_file: "config/sitemap.rb", context: [site, "en"]).run
+```
+
+Each `SiteMaps.generate` call resets the internal adapter state, so site configs don't leak across iterations. For **concurrent** multi-tenant generation (e.g., background jobs per site), instantiate adapters directly:
+
+```ruby
+adapter = SiteMaps::Adapters::FileSystem.new do
+  config.url = "https://#{site.domain}/sitemap.xml"
+  # ...
+end
+SiteMaps::Runner.new(adapter).enqueue_all.run
+```
 
 ## URL Filtering
 
