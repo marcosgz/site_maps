@@ -4,8 +4,9 @@ module SiteMaps
   class Runner
     attr_reader :adapter
 
-    def initialize(adapter = SiteMaps.current_adapter, max_threads: 4)
+    def initialize(adapter = SiteMaps.current_adapter, max_threads: 4, ping: nil)
       @adapter = adapter.tap(&:reset!)
+      @ping = ping
       @pool = Concurrent::FixedThreadPool.new(max_threads)
       @execution = Concurrent::Hash.new
       @failed = Concurrent::AtomicBoolean.new(false)
@@ -96,7 +97,8 @@ module SiteMaps
         raw_data = adapter.sitemap_index.to_xml
         adapter.write(adapter.config.url, raw_data, last_modified: adapter.sitemap_index.last_modified)
       end
-      ping_search_engines if adapter.config.respond_to?(:ping_search_engines?) && adapter.config.ping_search_engines?
+      should_ping = @ping.nil? ? adapter.config.respond_to?(:ping_search_engines?) && adapter.config.ping_search_engines? : @ping
+      ping_search_engines if should_ping
     end
 
     def ping_search_engines

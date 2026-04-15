@@ -9,6 +9,7 @@ module SiteMaps
     method_option :max_threads, type: :numeric, aliases: "-c", default: 4
     method_option :context, type: :hash, default: {}
     method_option :enqueue_remaining, type: :boolean, default: false
+    method_option :ping, type: :boolean, default: false, desc: "Ping search engines after generation"
 
     desc "generate 1st_process,2nd_process ... ,Nth_process", "Generate sitemap.xml files for the given processes"
     default_command :start
@@ -30,7 +31,8 @@ module SiteMaps
       runner = SiteMaps.generate(
         config_file: opts[:config_file],
         max_threads: opts[:max_threads],
-        context: context.empty? ? nil : context
+        context: context.empty? ? nil : context,
+        ping: opts[:ping] || nil
       )
       if processes.empty?
         runner.enqueue_all

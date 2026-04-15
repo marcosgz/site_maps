@@ -593,6 +593,20 @@ config.ping_engines = {
 }
 ```
 
+### Ping via generate / CLI
+
+Use the `ping:` option to trigger a ping for a specific run without changing the config file:
+
+```ruby
+SiteMaps.generate(config_file: "config/sitemap.rb", ping: true).enqueue_all.run
+```
+
+```bash
+bundle exec site_maps generate --config-file config/sitemap.rb --ping
+```
+
+`ping: true` overrides `config.ping_search_engines`. `ping: false` suppresses pinging even if the config enables it. Omitting `ping:` (the default) defers to the config value.
+
 ### Manual Ping
 
 ```ruby

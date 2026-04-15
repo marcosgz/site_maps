@@ -43,11 +43,15 @@ Work is declared as named **processes**. A process can be **static** (executed o
 
 ### CLI
 
-Implemented with Thor in `lib/site_maps/cli.rb`, exposed via the `exec/site_maps` binary. The main command is `site_maps generate [processes]` with flags `--config-file`, `--max-threads`, `--context` (key:value pairs for dynamic processes), `--enqueue-remaining`, `--debug`, and `--logfile`.
+Implemented with Thor in `lib/site_maps/cli.rb`, exposed via the `exec/site_maps` binary. The main command is `site_maps generate [processes]` with flags `--config-file`, `--max-threads`, `--context` (key:value pairs for dynamic processes), `--enqueue-remaining`, `--ping`, `--debug`, and `--logfile`.
 
 ### Rails Integration
 
 `lib/site_maps/railtie.rb` is auto-loaded when Rails is present. It injects Rails URL helpers into process blocks via a `route` helper method.
+
+## Development Guidelines
+
+- **Any new public-facing feature** (new option, method, CLI flag, or behaviour change) must be documented in `README.md` before the work is considered complete. This includes: new `generate`/`Runner` options, new middleware options, new CLI flags, new config attributes, and new DSL methods.
 
 ## Typical Usage Pattern
 
