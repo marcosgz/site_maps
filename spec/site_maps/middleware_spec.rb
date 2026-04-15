@@ -125,6 +125,45 @@ RSpec.describe SiteMaps::Middleware do
       end
     end
 
+    context "with a callable adapter" do
+      let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
+      let(:middleware) do
+        dir = fixtures_dir
+        described_class.new(inner_app, adapter: ->(env) {
+          SiteMaps.use(:file_system) do
+            config.url = "https://#{env["HTTP_HOST"]}/sitemap.xml"
+            config.directory = dir
+          end
+        })
+      end
+
+      it "resolves the adapter per request for XSL" do
+        env = {"PATH_INFO" => "/_sitemap-stylesheet.xsl", "REQUEST_METHOD" => "GET", "HTTP_HOST" => "tenant.com"}
+        status, headers, body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(headers["content-type"]).to eq("text/xsl; charset=UTF-8")
+        expect(body.first).to include("urlset")
+      end
+
+      it "resolves the adapter per request for sitemaps" do
+        env = {"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET", "HTTP_HOST" => "tenant.com"}
+        status, headers, _body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(headers["content-type"]).to eq("text/xml; charset=UTF-8")
+      end
+
+      it "passes through when the callable returns nil" do
+        middleware = described_class.new(inner_app, adapter: ->(_env) {})
+        env = {"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET"}
+        status, _headers, body = middleware.call(env)
+
+        expect(status).to eq(404)
+        expect(body).to eq(["Not Found"])
+      end
+    end
+
     context "with custom headers" do
       let(:middleware) do
         described_class.new(inner_app, adapter: adapter, x_robots_tag: "noindex", cache_control: "private")
