@@ -50,15 +50,23 @@ module SiteMaps
 
     def resolve_adapter(env)
       if @adapter.respond_to?(:call)
-        @adapter.call(env)
+        call_with_env(@adapter, env)
       else
         @adapter || SiteMaps.current_adapter
       end
     end
 
     def resolve_prefix(env)
-      prefix = @path_prefix.respond_to?(:call) ? @path_prefix.call(env) : @path_prefix
+      prefix = @path_prefix.respond_to?(:call) ? call_with_env(@path_prefix, env) : @path_prefix
       prefix&.chomp("/")
+    end
+
+    # Calls a callable with env if it accepts an argument, otherwise calls it
+    # with no arguments. This allows both `-> { Current.site }` (0-arg, useful
+    # when upstream middleware already set thread-local state) and
+    # `->(env) { ... }` (1-arg) forms.
+    def call_with_env(callable, env)
+      callable.arity.zero? ? callable.call : callable.call(env)
     end
 
     # Returns the path with the prefix stripped, nil if the prefix is set but
