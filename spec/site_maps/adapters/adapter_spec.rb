@@ -197,6 +197,43 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
   end
 
+  describe "#external_sitemap" do
+    let(:adapter) { described_class.new }
+
+    it "registers an external sitemap" do
+      adapter.external_sitemap("https://cdn.example.com/products-sitemap.xml")
+
+      expect(adapter.external_sitemaps.size).to eq(1)
+      expect(adapter.external_sitemaps.first.loc).to eq("https://cdn.example.com/products-sitemap.xml")
+    end
+
+    it "registers with lastmod" do
+      time = Time.new(2024, 6, 1)
+      adapter.external_sitemap("https://cdn.example.com/sitemap.xml", lastmod: time)
+
+      expect(adapter.external_sitemaps.first.lastmod).to eq(time)
+    end
+
+    it "can be used in the DSL block" do
+      instance = described_class.new do
+        config.url = "https://example.com/sitemap.xml"
+        external_sitemap "https://cdn.example.com/products-sitemap.xml"
+        external_sitemap "https://cdn.example.com/images-sitemap.xml"
+        process { |s, **| }
+      end
+
+      expect(instance.external_sitemaps.size).to eq(2)
+    end
+
+    it "prevents inline urlset when external sitemaps are present" do
+      adapter.process { |*, **| }
+      expect(adapter.send(:maybe_inline_urlset?)).to be(true)
+
+      adapter.external_sitemap("https://cdn.example.com/sitemap.xml")
+      expect(adapter.send(:maybe_inline_urlset?)).to be(false)
+    end
+  end
+
   describe "#extend_processes_with" do
     let(:adapter) { described_class.new }
     let(:mod) do

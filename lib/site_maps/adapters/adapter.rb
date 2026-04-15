@@ -61,8 +61,17 @@ module SiteMaps::Adapters
       @processes[name] = SiteMaps::Process.new(name, location, kwargs, block)
     end
 
+    def external_sitemap(url, lastmod: nil)
+      @external_sitemaps ||= Concurrent::Array.new
+      @external_sitemaps << SiteMaps::Builder::SitemapIndex::Item.new(url, lastmod)
+    end
+
+    def external_sitemaps
+      @external_sitemaps || []
+    end
+
     def maybe_inline_urlset?
-      @processes.size == 1 && @processes.first.last.static?
+      @processes.size == 1 && @processes.first.last.static? && external_sitemaps.empty?
     end
 
     def repo

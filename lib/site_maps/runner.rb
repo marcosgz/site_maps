@@ -89,6 +89,9 @@ module SiteMaps
       adapter.repo.remaining_index_links.each do |item|
         adapter.sitemap_index.add(item)
       end
+      adapter.external_sitemaps.each do |item|
+        adapter.sitemap_index.add(item)
+      end
       unless adapter.sitemap_index.empty?
         raw_data = adapter.sitemap_index.to_xml
         adapter.write(adapter.config.url, raw_data, last_modified: adapter.sitemap_index.last_modified)
