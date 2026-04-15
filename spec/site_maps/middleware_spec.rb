@@ -52,6 +52,15 @@ RSpec.describe SiteMaps::Middleware do
         expect(headers["cache-control"]).to eq("public, max-age=3600")
       end
 
+      it "serves gzip sitemaps as decompressed XML" do
+        env = {"PATH_INFO" => "/sitemap.xml.gz", "REQUEST_METHOD" => "GET"}
+        status, headers, body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(headers["content-type"]).to eq("text/xml; charset=UTF-8")
+        expect(body.first).to include("<?xml")
+      end
+
       it "passes through when sitemap is not found" do
         env = {"PATH_INFO" => "/missing.xml", "REQUEST_METHOD" => "GET"}
         status, _headers, _body = middleware.call(env)

@@ -73,12 +73,22 @@ module SiteMaps
     def serve_sitemap(path)
       url = "#{adapter.config.base_uri}#{path}"
       raw_data, metadata = adapter.read(url)
-      content_type = metadata[:content_type] || "text/xml; charset=UTF-8"
-      content_type = "text/xml; charset=UTF-8" if content_type == "application/xml"
+      body = decompress(raw_data, metadata)
 
-      [200, sitemap_headers(content_type), [raw_data]]
+      [200, sitemap_headers("text/xml; charset=UTF-8"), [body]]
     rescue SiteMaps::FileNotFoundError
       @app.call({"PATH_INFO" => path, "REQUEST_METHOD" => "GET"})
+    end
+
+    # The adapter may return gzip-compressed data (raw bytes) or already-decompressed
+    # XML. Always serve as plain XML so sitemaps are browsable with XSL stylesheets.
+    def decompress(raw_data, metadata)
+      return raw_data unless metadata && metadata[:content_type] == "application/gzip"
+
+      Zlib::GzipReader.new(StringIO.new(raw_data)).read
+    rescue Zlib::GzipFile::Error
+      # Data was already decompressed (e.g., FileSystem adapter decompresses on read)
+      raw_data
     end
 
     def serve_xsl(path)
