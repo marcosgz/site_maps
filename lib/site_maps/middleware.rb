@@ -69,7 +69,7 @@ module SiteMaps
           public_redirect = "#{pub_prefix}#{strip_prefix(redirect, sto_prefix)}"
           redirect_to(public_redirect)
         elsif internal_path && current_adapter && sitemap_request?(internal_path, current_adapter)
-          serve_sitemap(internal_path, current_adapter)
+          serve_sitemap(internal_path, current_adapter, pub_prefix: pub_prefix, sto_prefix: sto_prefix)
         else
           @app.call(env)
         end
@@ -150,14 +150,38 @@ module SiteMaps
       [301, {"location" => path, "content-type" => "text/html"}, ["Moved Permanently"]]
     end
 
-    def serve_sitemap(path, adapter)
+    def serve_sitemap(path, adapter, pub_prefix: nil, sto_prefix: nil)
       url = "#{adapter.config.base_uri}#{path}"
       raw_data, metadata = adapter.read(url)
       body = decompress(raw_data, metadata)
+      body = rewrite_locs(body, adapter.config.base_uri, pub_prefix, sto_prefix)
 
       [200, sitemap_headers("text/xml; charset=UTF-8"), [body]]
     rescue SiteMaps::FileNotFoundError
       @app.call({"PATH_INFO" => path, "REQUEST_METHOD" => "GET"})
+    end
+
+    # Rewrites <loc> URLs in served XML so they match the public paths the
+    # middleware actually handles, not the internal storage paths.
+    #
+    # storage_prefix case: strips the storage prefix from all <loc> URLs.
+    #   stored:  https://example.com/sitemaps/tenant/static/sitemap.xml
+    #   public:  https://example.com/static/sitemap.xml
+    #
+    # public_prefix case: prepends the public prefix to <loc> URLs in sitemap
+    #   index files only (URL sets contain page URLs that must not be touched).
+    #   stored:  https://example.com/static/sitemap.xml
+    #   public:  https://example.com/sitemaps/tenant/static/sitemap.xml
+    def rewrite_locs(body, base_uri, pub_prefix, sto_prefix)
+      base = base_uri.to_s
+
+      if sto_prefix && !sto_prefix.empty?
+        body.gsub("#{base}#{sto_prefix}/", "#{base}/")
+      elsif pub_prefix && !pub_prefix.empty? && body.include?("<sitemapindex")
+        body.gsub("<loc>#{base}/", "<loc>#{base}#{pub_prefix}/")
+      else
+        body
+      end
     end
 
     # The adapter may return gzip-compressed data (raw bytes) or already-decompressed

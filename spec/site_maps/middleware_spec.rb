@@ -227,6 +227,66 @@ RSpec.describe SiteMaps::Middleware do
         expect(status).to eq(301)
         expect(headers["location"]).to eq("/sitemap.xml")
       end
+
+      it "rewrites <loc> URLs in the served XML to strip the storage prefix" do
+        index_xml = <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <sitemapindex>
+            <sitemap><loc>https://example.com/sitemaps/example/static/sitemap.xml</loc></sitemap>
+            <sitemap><loc>https://example.com/sitemaps/example/posts/sitemap.xml</loc></sitemap>
+          </sitemapindex>
+        XML
+        allow(storage_adapter).to receive(:read).and_return([index_xml, {}])
+
+        env = {"PATH_INFO" => "/sitemap_index.xml", "REQUEST_METHOD" => "GET"}
+        _status, _headers, body = middleware.call(env)
+
+        expect(body.first).to include("<loc>https://example.com/static/sitemap.xml</loc>")
+        expect(body.first).to include("<loc>https://example.com/posts/sitemap.xml</loc>")
+        expect(body.first).not_to include("/sitemaps/example/")
+      end
+    end
+
+    context "with public_prefix loc rewriting" do
+      let(:pub_adapter) do
+        SiteMaps.use(:noop) { config.url = "https://example.com/sitemap.xml" }
+      end
+      let(:middleware) do
+        described_class.new(inner_app, public_prefix: "/sitemaps/example", adapter: pub_adapter)
+      end
+
+      it "rewrites <loc> URLs in sitemap index to add the public prefix" do
+        index_xml = <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <sitemapindex>
+            <sitemap><loc>https://example.com/static/sitemap.xml</loc></sitemap>
+            <sitemap><loc>https://example.com/posts/sitemap.xml</loc></sitemap>
+          </sitemapindex>
+        XML
+        allow(pub_adapter).to receive(:read).and_return([index_xml, {}])
+
+        env = {"PATH_INFO" => "/sitemaps/example/sitemap_index.xml", "REQUEST_METHOD" => "GET"}
+        _status, _headers, body = middleware.call(env)
+
+        expect(body.first).to include("<loc>https://example.com/sitemaps/example/static/sitemap.xml</loc>")
+        expect(body.first).to include("<loc>https://example.com/sitemaps/example/posts/sitemap.xml</loc>")
+      end
+
+      it "does not rewrite <loc> URLs in URL set files" do
+        urlset_xml = <<~XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <urlset>
+            <url><loc>https://example.com/some-page</loc></url>
+          </urlset>
+        XML
+        allow(pub_adapter).to receive(:read).and_return([urlset_xml, {}])
+
+        env = {"PATH_INFO" => "/sitemaps/example/sitemap.xml", "REQUEST_METHOD" => "GET"}
+        _status, _headers, body = middleware.call(env)
+
+        expect(body.first).to include("<loc>https://example.com/some-page</loc>")
+        expect(body.first).not_to include("/sitemaps/example/some-page")
+      end
     end
 
     context "with a callable public_prefix" do
