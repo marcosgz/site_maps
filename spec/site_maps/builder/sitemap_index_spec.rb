@@ -48,6 +48,27 @@ RSpec.describe SiteMaps::Builder::SitemapIndex do
     end
   end
 
+  describe "xsl_url support" do
+    it "includes the XSL processing instruction when xsl_url is set" do
+      sitemap_index = described_class.new(xsl_url: "https://example.com/index-style.xsl")
+      sitemap_index.add("https://example.com/sitemap.xml")
+
+      xml = sitemap_index.to_xml
+
+      expect(xml).to include('<?xml-stylesheet type="text/xsl" href="https://example.com/index-style.xsl"?>')
+      expect(xml).to include("<sitemapindex")
+    end
+
+    it "does not include XSL processing instruction by default" do
+      sitemap_index = described_class.new
+      sitemap_index.add("https://example.com/sitemap.xml")
+
+      xml = sitemap_index.to_xml
+
+      expect(xml).not_to include("xml-stylesheet")
+    end
+  end
+
   describe "#empty?" do
     it "returns true when there are no sitemaps" do
       sitemap_index = described_class.new

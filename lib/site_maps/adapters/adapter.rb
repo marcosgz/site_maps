@@ -74,7 +74,8 @@ module SiteMaps::Adapters
     end
 
     def reset!
-      @sitemap_index = SiteMaps::Builder::SitemapIndex.new
+      xsl_url = config.respond_to?(:xsl_index_stylesheet_url) ? config.xsl_index_stylesheet_url : nil
+      @sitemap_index = SiteMaps::Builder::SitemapIndex.new(xsl_url: xsl_url)
       @repo = nil
     end
   end

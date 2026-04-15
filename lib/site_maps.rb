@@ -23,6 +23,7 @@ loader.inflector.inflect "dsl" => "DSL"
 loader.inflector.inflect "url_set" => "URLSet"
 loader.inflector.inflect "url" => "URL"
 loader.inflector.inflect "xml" => "XML"
+loader.inflector.inflect "xsl_stylesheet" => "XSLStylesheet"
 loader.log! if ENV["DEBUG_ZEITWERK"]
 loader.setup
 
