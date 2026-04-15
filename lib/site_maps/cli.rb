@@ -26,14 +26,16 @@ module SiteMaps
 
       SiteMaps::Notification.subscribe(SiteMaps::Runner::EventListener)
 
+      context = (opts[:context] || {}).transform_keys(&:to_sym)
       runner = SiteMaps.generate(
         config_file: opts[:config_file],
-        max_threads: opts[:max_threads]
+        max_threads: opts[:max_threads],
+        context: context.empty? ? nil : context
       )
       if processes.empty?
         runner.enqueue_all
       else
-        kwargs = (opts[:context] || {}).transform_keys(&:to_sym)
+        kwargs = context
         processes.split(",").each do |process|
           runner.enqueue(process.strip.to_sym, **kwargs)
         end
