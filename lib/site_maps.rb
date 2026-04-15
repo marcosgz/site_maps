@@ -3,6 +3,7 @@
 require_relative "site_maps/version"
 
 require "builder"
+require "logger"
 require "concurrent-ruby"
 require "date"
 require "fileutils"
@@ -34,7 +35,7 @@ module SiteMaps
     news: 1_000
   }
   MAX_FILESIZE = 50_000_000 # bytes
-  DEFAULT_LOGGER = Logger.new($stdout)
+  DEFAULT_LOGGER = ::Logger.new($stdout)
 
   Error = Class.new(StandardError)
   AdapterNotFound = Class.new(Error)

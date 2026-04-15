@@ -25,7 +25,7 @@ class SiteMaps::Builder::SitemapIndex::Item < Struct.new(:loc, :lastmod)
     return unless loc =~ %r{^https?://[^/]+(/.*)$}
 
     val = File.dirname(Regexp.last_match(1))
-    val = val[1..-1] if val.start_with?("/")
+    val = val[1..] if val.start_with?("/")
     val
   end
 

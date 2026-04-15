@@ -97,7 +97,7 @@ module SiteMaps
 
     def remote_sitemap_directory
       path = ::URI.parse(url).path
-      path = path[1..-1] if path.start_with?("/")
+      path = path[1..] if path.start_with?("/")
       path.split("/")[0..-2].join("/")
     end
 

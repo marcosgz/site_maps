@@ -53,7 +53,7 @@ module SiteMaps
       end
       base = uri.dup.tap { |v| v.path = "" }.to_s
       basename = File.basename(uri.path)
-      index_basename = basename.sub(/[\.](xml|xml\.gz)$/, "#{PLACEHOLDER}.\\1")
+      index_basename = basename.sub(/\.(xml|xml\.gz)$/, "#{PLACEHOLDER}.\\1")
 
       @placeholder_url = File.join(base, File.join(File.dirname(uri.path), index_basename))
       @uri = URI(File.join(base, File.join(File.dirname(uri.path), basename)))
