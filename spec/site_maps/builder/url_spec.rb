@@ -115,6 +115,75 @@ RSpec.describe SiteMaps::Builder::URL do
     end
   end
 
+  describe "emit_priority and emit_changefreq" do
+    context "when emit_priority is false" do
+      let(:instance) { described_class.new(link, emit_priority: false) }
+
+      it "does not include priority in attributes" do
+        expect(instance.attributes).not_to have_key(:priority)
+      end
+
+      it "does not emit priority in XML" do
+        doc = Nokogiri::XML([
+          SiteMaps::Builder::URLSet::HEADER,
+          instance.to_xml,
+          SiteMaps::Builder::URLSet::FOOTER
+        ].join("\n"))
+
+        expect(doc.css("url priority")).to be_empty
+      end
+    end
+
+    context "when emit_changefreq is false" do
+      let(:instance) { described_class.new(link, emit_changefreq: false) }
+
+      it "does not include changefreq in attributes" do
+        expect(instance.attributes).not_to have_key(:changefreq)
+      end
+
+      it "does not emit changefreq in XML" do
+        doc = Nokogiri::XML([
+          SiteMaps::Builder::URLSet::HEADER,
+          instance.to_xml,
+          SiteMaps::Builder::URLSet::FOOTER
+        ].join("\n"))
+
+        expect(doc.css("url changefreq")).to be_empty
+      end
+    end
+
+    context "when both are false" do
+      let(:instance) { described_class.new(link, emit_priority: false, emit_changefreq: false) }
+
+      it "still includes loc" do
+        doc = Nokogiri::XML([
+          SiteMaps::Builder::URLSet::HEADER,
+          instance.to_xml,
+          SiteMaps::Builder::URLSet::FOOTER
+        ].join("\n"))
+
+        expect(doc.css("url loc").text).to eq(link)
+        expect(doc.css("url priority")).to be_empty
+        expect(doc.css("url changefreq")).to be_empty
+      end
+    end
+
+    context "when explicitly passed even with emit flags off" do
+      let(:instance) { described_class.new(link, emit_priority: false, emit_changefreq: false, priority: 0.9, changefreq: "daily") }
+
+      it "still emits explicitly provided values" do
+        doc = Nokogiri::XML([
+          SiteMaps::Builder::URLSet::HEADER,
+          instance.to_xml,
+          SiteMaps::Builder::URLSet::FOOTER
+        ].join("\n"))
+
+        expect(doc.css("url priority").text).to eq("0.9")
+        expect(doc.css("url changefreq").text).to eq("daily")
+      end
+    end
+  end
+
   describe "#last_modified" do
     it "returns last modified date" do
       time = Time.new(2021, 1, 1)
