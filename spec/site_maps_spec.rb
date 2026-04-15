@@ -119,6 +119,30 @@ RSpec.describe SiteMaps do
       expect(runner_b.adapter.config.url).to eq("https://b.com/sitemap.xml")
     end
 
+    it "is thread-safe across concurrent generate calls" do
+      results = Concurrent::Hash.new
+      errors = Concurrent::Array.new
+      sites = Array.new(20) { |i| {domain: "site#{i}.com", directory: "/tmp/site#{i}", slug: "site#{i}"} }
+
+      # Run each site's generate repeatedly to stress the race window
+      threads = sites.map do |site|
+        Thread.new do
+          5.times do
+            runner = described_class.generate(config_file: config_path, context: site)
+            results[site[:slug]] = runner.adapter.config.url
+          rescue => e
+            errors << e
+          end
+        end
+      end
+      threads.each(&:join)
+
+      expect(errors).to be_empty
+      sites.each do |site|
+        expect(results[site[:slug]]).to eq("https://#{site[:domain]}/sitemap.xml")
+      end
+    end
+
     it "accepts multiple context args as an array" do
       path = File.join(Dir.tmpdir, "multi_context_#{SecureRandom.hex(4)}.rb")
       File.write(path, <<~RUBY)

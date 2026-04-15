@@ -238,7 +238,22 @@ end
 SiteMaps.generate(config_file: "config/sitemap.rb", context: [site, "en"]).run
 ```
 
-Each `SiteMaps.generate` call resets the internal adapter state, so site configs don't leak across iterations. For **concurrent** multi-tenant generation (e.g., background jobs per site), instantiate adapters directly:
+### Thread safety
+
+`SiteMaps.generate(config_file:, context:)` is thread-safe. Each call uses a thread-local scope to isolate adapter construction during `load(config_file)`, so concurrent calls from different threads don't race on module-level state:
+
+```ruby
+Site.find_each.map do |site|
+  Thread.new do
+    config_file = Rails.root.join("config/sites/#{site.slug}/sitemap.rb")
+    SiteMaps.generate(config_file: config_file, context: site).enqueue_all.run
+  end
+end.each(&:join)
+```
+
+Each thread's `Runner` gets its own isolated adapter. Note that `SiteMaps.current_adapter` (the module singleton) exhibits last-writer-wins semantics under concurrency — use the `Runner`'s `#adapter` attribute if you need a specific generation's adapter.
+
+For cases where you want to skip the config file entirely (e.g., everything dynamic from the database), instantiate adapters directly:
 
 ```ruby
 adapter = SiteMaps::Adapters::FileSystem.new do
