@@ -15,10 +15,13 @@ module SiteMaps
     def add(path, params: nil, **options)
       @mutex.synchronize do
         link = build_link(path, params)
-        url_set.add(link, **options)
+        filtered_options = adapter.apply_url_filters(link, options)
+        return if filtered_options.nil?
+
+        url_set.add(link, **filtered_options)
       rescue SiteMaps::FullSitemapError
         finalize_and_start_next_urlset!
-        url_set.add(link, **options)
+        url_set.add(link, **filtered_options)
       end
     end
 

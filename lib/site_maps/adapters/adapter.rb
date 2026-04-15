@@ -82,6 +82,25 @@ module SiteMaps::Adapters
       @process_mixins << mod
     end
 
+    def url_filter(&block)
+      if block
+        @url_filters ||= Concurrent::Array.new
+        @url_filters << block
+      end
+      @url_filters || []
+    end
+
+    def apply_url_filters(link, options)
+      url = link.respond_to?(:to_s) ? link.to_s : link
+      url_filter.each do |filter|
+        result = filter.call(url, options)
+        return nil if result == false
+
+        options = result if result.is_a?(Hash)
+      end
+      options
+    end
+
     def reset!
       xsl_url = config.respond_to?(:xsl_index_stylesheet_url) ? config.xsl_index_stylesheet_url : nil
       @sitemap_index = SiteMaps::Builder::SitemapIndex.new(xsl_url: xsl_url)

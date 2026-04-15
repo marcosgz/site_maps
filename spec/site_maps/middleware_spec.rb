@@ -70,7 +70,7 @@ RSpec.describe SiteMaps::Middleware do
       end
     end
 
-    context "URL normalization redirects" do
+    context "with URL normalization redirects" do
       it "redirects sitemap0.xml to sitemap.xml with 301" do
         env = {"PATH_INFO" => "/sitemap0.xml", "REQUEST_METHOD" => "GET"}
         status, headers, _body = middleware.call(env)
