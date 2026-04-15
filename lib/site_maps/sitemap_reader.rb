@@ -43,6 +43,9 @@ module SiteMaps
       raise FileNotFoundError.new("The file #{@location} does not exist")
     rescue OpenURI::HTTPError
       raise FileNotFoundError.new("The file #{@location} could not be opened")
+    rescue SocketError, Errno::ECONNREFUSED, Errno::ETIMEDOUT,
+      Net::OpenTimeout, Net::ReadTimeout => e
+      raise FileNotFoundError.new("The file #{@location} could not be reached: #{e.message}")
     end
 
     def compressed?
