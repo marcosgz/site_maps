@@ -35,7 +35,7 @@ module SiteMaps
     def sitemap_request?(path)
       sitemap_dir = adapter.config.remote_sitemap_directory
       prefix = sitemap_dir.empty? ? "/" : "/#{sitemap_dir}/"
-      path.start_with?(prefix) && (path.end_with?(".xml") || path.end_with?(".xml.gz"))
+      path.start_with?(prefix) && path.end_with?(".xml", ".xml.gz")
     end
 
     def xsl_request?(path)
