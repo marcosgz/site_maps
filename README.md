@@ -10,6 +10,8 @@ Generates SEO-optimized XML sitemaps with support for sitemap indexes, XSL style
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Processes](#processes)
+- [URL Filtering](#url-filtering)
+- [External Sitemaps](#external-sitemaps)
 - [Sitemap Extensions](#sitemap-extensions)
 - [XSL Stylesheets](#xsl-stylesheets)
 - [Rack Middleware](#rack-middleware)
@@ -189,6 +191,55 @@ Sitemaps are automatically split into multiple files and a sitemap index is gene
 - Uncompressed file size exceeds 50MB.
 
 Split files are named sequentially: `sitemap1.xml`, `sitemap2.xml`, etc.
+
+## URL Filtering
+
+Use `url_filter` to exclude or modify URLs before they enter the sitemap. Filters receive the full URL string and the options hash. Return `false` to exclude, or a modified hash to change options:
+
+```ruby
+SiteMaps.use(:file_system) do
+  config.url = "https://example.com/sitemap.xml"
+
+  # Exclude admin URLs
+  url_filter { |url, _options| false if url.include?("/admin") }
+
+  # Override priority for blog posts
+  url_filter do |url, options|
+    if url.include?("/blog/")
+      options.merge(priority: 0.9)
+    else
+      options
+    end
+  end
+
+  process do |s|
+    s.add("/", lastmod: Time.now)
+    s.add("/admin/dashboard")  # excluded by filter
+    s.add("/blog/hello-world", lastmod: Time.now)  # priority overridden to 0.9
+  end
+end
+```
+
+Multiple filters are chained in order. If any filter returns `false`, the URL is excluded and subsequent filters are not called.
+
+## External Sitemaps
+
+Add third-party or externally-hosted sitemaps to your sitemap index using `external_sitemap`:
+
+```ruby
+SiteMaps.use(:file_system) do
+  config.url = "https://example.com/sitemap.xml"
+
+  external_sitemap "https://cdn.example.com/products-sitemap.xml", lastmod: Time.now
+  external_sitemap "https://blog.example.com/sitemap.xml"
+
+  process do |s|
+    s.add("/", lastmod: Time.now)
+  end
+end
+```
+
+External sitemaps appear in the sitemap index alongside your generated sitemaps. When external sitemaps are present, the index is always generated (even with a single process).
 
 ## Sitemap Extensions
 
