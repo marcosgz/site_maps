@@ -69,8 +69,41 @@ RSpec.describe SiteMaps::CLI do
 
         generate!
 
+        expect(SiteMaps).to have_received(:generate).with(
+          hash_including(context: {year: "2022", month: "2"})
+        )
         expect(runner).to have_received(:enqueue).with(:default, year: "2022", month: "2")
         expect(runner).to have_received(:run)
+      end
+    end
+
+    context "with no context" do
+      subject(:generate!) { cli.generate }
+
+      it "passes nil context to generate" do
+        runner = instance_double(SiteMaps::Runner, enqueue_all: nil, run: nil)
+        allow(SiteMaps).to receive(:generate).and_return(runner)
+
+        generate!
+
+        expect(SiteMaps).to have_received(:generate).with(hash_including(context: nil))
+      end
+    end
+
+    context "with --ping flag" do
+      subject(:generate!) { cli.generate }
+
+      before do
+        cli.instance_variable_set(:@options, {ping: true})
+      end
+
+      it "passes ping: true to SiteMaps.generate" do
+        runner = instance_double(SiteMaps::Runner, enqueue_all: nil, run: nil)
+        allow(SiteMaps).to receive(:generate).and_return(runner)
+
+        generate!
+
+        expect(SiteMaps).to have_received(:generate).with(hash_including(ping: true))
       end
     end
   end

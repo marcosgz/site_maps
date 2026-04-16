@@ -3,6 +3,7 @@
 require_relative "site_maps/version"
 
 require "builder"
+require "logger"
 require "concurrent-ruby"
 require "date"
 require "fileutils"
@@ -23,6 +24,7 @@ loader.inflector.inflect "dsl" => "DSL"
 loader.inflector.inflect "url_set" => "URLSet"
 loader.inflector.inflect "url" => "URL"
 loader.inflector.inflect "xml" => "XML"
+loader.inflector.inflect "xsl_stylesheet" => "XSLStylesheet"
 loader.log! if ENV["DEBUG_ZEITWERK"]
 loader.setup
 
@@ -33,7 +35,7 @@ module SiteMaps
     news: 1_000
   }
   MAX_FILESIZE = 50_000_000 # bytes
-  DEFAULT_LOGGER = Logger.new($stdout)
+  DEFAULT_LOGGER = ::Logger.new($stdout)
 
   Error = Class.new(StandardError)
   AdapterNotFound = Class.new(Error)
@@ -41,6 +43,10 @@ module SiteMaps
   FileNotFoundError = Class.new(Error)
   FullSitemapError = Class.new(Error)
   ConfigurationError = Class.new(Error)
+
+  SCOPE_KEY = :__site_maps_scope__
+
+  @mutex = Mutex.new
 
   class << self
     attr_reader :current_adapter
@@ -61,11 +67,44 @@ module SiteMaps
           raise AdapterNotFound, "Adapter #{adapter.inspect} not found"
         end
       end
-      @current_adapter = adapter_class.new(**options, &block)
+      instance = adapter_class.new(**options, &block)
+      if (scope = Thread.current[SCOPE_KEY])
+        scope[:adapter] = instance
+      else
+        @current_adapter = instance
+      end
+      instance
+    end
+
+    # Register a context-aware sitemap definition. The block is stored and
+    # called when {.generate} is invoked with a `context:` hash. The hash
+    # keys are passed as keyword arguments to the block.
+    #
+    # Example:
+    #   # config/sitemap.rb
+    #   SiteMaps.define do |site:|
+    #     use(:file_system) do
+    #       config.url = "https://#{site.domain}/sitemap.xml"
+    #       process { |s| site.pages.each { |p| s.add(p.path) } }
+    #     end
+    #   end
+    #
+    #   # Usage:
+    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site})
+    #     .enqueue_all
+    #     .run
+    #
+    # @param block [Proc] Receives keyword arguments from the `context:` hash
+    def define(&block)
+      if (scope = Thread.current[SCOPE_KEY])
+        scope[:definition] = block
+      else
+        @definition = block
+      end
     end
 
     def config
-      @config ||= Configuration.new
+      @mutex.synchronize { @config ||= Configuration.new }
       yield(@config) if block_given?
       @config
     end
@@ -88,21 +127,53 @@ module SiteMaps
     #     .enqueue_remaining # Enqueue all other non-enqueued processes
     #     .run
     #
+    # For multi-tenant / context-aware configurations, the config file can
+    # use {.define} and pass runtime context as keyword arguments via the
+    # `context:` kwarg:
+    #
+    # Example:
+    #   SiteMaps.generate(config_file: "config/sitemap.rb", context: {site: site})
+    #     .enqueue_all
+    #     .run
+    #
     # @param config_file [String] The path to a configuration file
+    # @param context [Hash] Keyword arguments passed to the block registered
+    #   via {.define}. Must be a Hash (or nil for no context).
     # @param options [Hash] Options to pass to the runner
     # @return [Runner] An instance of the runner
-    def generate(config_file: nil, **options)
+    def generate(config_file: nil, context: nil, **options)
+      adapter = nil
       if config_file
-        @current_adapter = nil
-        load(config_file)
-      end
-      raise AdapterNotSetError, "No adapter set. Use SiteMaps.use to set an adapter" unless current_adapter
+        previous_scope = Thread.current[SCOPE_KEY]
+        scope = {adapter: nil, definition: nil}
+        Thread.current[SCOPE_KEY] = scope
+        begin
+          load(config_file)
+          if scope[:definition]
+            kwargs = context || {}
+            raise ArgumentError, "context: must be a Hash, got #{context.class}" unless kwargs.is_a?(Hash)
 
-      Runner.new(current_adapter, **options)
+            instance_exec(**kwargs, &scope[:definition])
+          end
+          adapter = scope[:adapter]
+        ensure
+          Thread.current[SCOPE_KEY] = previous_scope
+        end
+        # Preserve backward-compat: expose the generated adapter through
+        # the `current_adapter` singleton for single-tenant callers. In
+        # multi-tenant concurrent use, last-writer-wins — each Runner still
+        # gets its own isolated adapter from the thread-local scope above.
+        @current_adapter = adapter if adapter
+      else
+        adapter = current_adapter
+      end
+      raise AdapterNotSetError, "No adapter set. Use SiteMaps.use to set an adapter" unless adapter
+
+      Runner.new(adapter, **options)
     end
 
     def logger
-      @logger ||= DEFAULT_LOGGER
+      @mutex.synchronize { @logger ||= DEFAULT_LOGGER }
     end
   end
 end

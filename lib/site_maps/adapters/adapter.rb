@@ -61,8 +61,17 @@ module SiteMaps::Adapters
       @processes[name] = SiteMaps::Process.new(name, location, kwargs, block)
     end
 
+    def external_sitemap(url, lastmod: nil)
+      @external_sitemaps ||= Concurrent::Array.new
+      @external_sitemaps << SiteMaps::Builder::SitemapIndex::Item.new(url, lastmod)
+    end
+
+    def external_sitemaps
+      @external_sitemaps || []
+    end
+
     def maybe_inline_urlset?
-      @processes.size == 1 && @processes.first.last.static?
+      @processes.size == 1 && @processes.first.last.static? && external_sitemaps.empty?
     end
 
     def repo
@@ -73,8 +82,28 @@ module SiteMaps::Adapters
       @process_mixins << mod
     end
 
+    def url_filter(&block)
+      if block
+        @url_filters ||= Concurrent::Array.new
+        @url_filters << block
+      end
+      @url_filters || []
+    end
+
+    def apply_url_filters(link, options)
+      url = link.respond_to?(:to_s) ? link.to_s : link
+      url_filter.each do |filter|
+        result = filter.call(url, options)
+        return nil if result == false
+
+        options = result if result.is_a?(Hash)
+      end
+      options
+    end
+
     def reset!
-      @sitemap_index = SiteMaps::Builder::SitemapIndex.new
+      xsl_url = config.respond_to?(:xsl_index_stylesheet_url) ? config.xsl_index_stylesheet_url : nil
+      @sitemap_index = SiteMaps::Builder::SitemapIndex.new(xsl_url: xsl_url)
       @repo = nil
     end
   end

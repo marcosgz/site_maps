@@ -197,6 +197,109 @@ RSpec.describe SiteMaps::Adapters::Adapter do
     end
   end
 
+  describe "#url_filter" do
+    let(:adapter) { described_class.new }
+
+    it "registers a filter block" do
+      adapter.url_filter { |_url, options| options }
+
+      expect(adapter.url_filter.size).to eq(1)
+    end
+
+    it "can be used in the DSL block" do
+      instance = described_class.new do
+        config.url = "https://example.com/sitemap.xml"
+        url_filter { |_url, options| options }
+        url_filter { |_url, options| options }
+      end
+
+      expect(instance.url_filter.size).to eq(2)
+    end
+  end
+
+  describe "#apply_url_filters" do
+    let(:adapter) { described_class.new }
+
+    it "returns options when no filters" do
+      result = adapter.apply_url_filters("https://example.com/", {priority: 0.8})
+
+      expect(result).to eq({priority: 0.8})
+    end
+
+    it "excludes URLs when filter returns false" do
+      adapter.url_filter { |url, _options| false if url.include?("/admin") }
+
+      expect(adapter.apply_url_filters("https://example.com/admin", {})).to be_nil
+      expect(adapter.apply_url_filters("https://example.com/about", {})).to eq({})
+    end
+
+    it "excludes URLs when filter returns false explicitly" do
+      adapter.url_filter { |url, _options| false if url.include?("/private") }
+
+      expect(adapter.apply_url_filters("https://example.com/private", {})).to be_nil
+    end
+
+    it "does not exclude when filter returns nil implicitly" do
+      adapter.url_filter { |url, _options| "something" if url.include?("/special") }
+
+      expect(adapter.apply_url_filters("https://example.com/normal", {})).to eq({})
+    end
+
+    it "allows filters to modify options" do
+      adapter.url_filter do |_url, options|
+        options.merge(priority: 1.0)
+      end
+
+      result = adapter.apply_url_filters("https://example.com/", {priority: 0.5})
+      expect(result).to eq({priority: 1.0})
+    end
+
+    it "chains multiple filters" do
+      adapter.url_filter { |url, _opts| false if url.include?("/blocked") }
+      adapter.url_filter { |_url, opts| opts.merge(changefreq: "daily") }
+
+      expect(adapter.apply_url_filters("https://example.com/blocked", {})).to be_nil
+      expect(adapter.apply_url_filters("https://example.com/ok", {})).to eq({changefreq: "daily"})
+    end
+  end
+
+  describe "#external_sitemap" do
+    let(:adapter) { described_class.new }
+
+    it "registers an external sitemap" do
+      adapter.external_sitemap("https://cdn.example.com/products-sitemap.xml")
+
+      expect(adapter.external_sitemaps.size).to eq(1)
+      expect(adapter.external_sitemaps.first.loc).to eq("https://cdn.example.com/products-sitemap.xml")
+    end
+
+    it "registers with lastmod" do
+      time = Time.new(2024, 6, 1)
+      adapter.external_sitemap("https://cdn.example.com/sitemap.xml", lastmod: time)
+
+      expect(adapter.external_sitemaps.first.lastmod).to eq(time)
+    end
+
+    it "can be used in the DSL block" do
+      instance = described_class.new do
+        config.url = "https://example.com/sitemap.xml"
+        external_sitemap "https://cdn.example.com/products-sitemap.xml"
+        external_sitemap "https://cdn.example.com/images-sitemap.xml"
+        process { |s, **| }
+      end
+
+      expect(instance.external_sitemaps.size).to eq(2)
+    end
+
+    it "prevents inline urlset when external sitemaps are present" do
+      adapter.process { |*, **| }
+      expect(adapter.send(:maybe_inline_urlset?)).to be(true)
+
+      adapter.external_sitemap("https://cdn.example.com/sitemap.xml")
+      expect(adapter.send(:maybe_inline_urlset?)).to be(false)
+    end
+  end
+
   describe "#extend_processes_with" do
     let(:adapter) { described_class.new }
     let(:mod) do

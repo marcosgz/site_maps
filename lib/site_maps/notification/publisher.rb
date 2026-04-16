@@ -11,6 +11,7 @@ module SiteMaps::Notification
     # @api public
     module ClassMethods
       extend Forwardable
+
       def_delegators :bus, :publish, :subscribed?, :unsubscribe
 
       # Register a new event type

@@ -53,6 +53,39 @@ RSpec.describe SiteMaps::SitemapBuilder do
       expect(builder.send(:url_set).links_count).to eq(1)
     end
 
+    context "with url_filter that excludes URLs" do
+      let(:adapter) do
+        SiteMaps.use(:noop) do
+          config.url = "https://example.com/sitemap.xml"
+          url_filter { |url, _opts| false if url.include?("/admin") }
+        end
+      end
+
+      it "skips excluded URLs" do
+        builder.add("/public")
+        builder.add("/admin/dashboard")
+        builder.add("/about")
+
+        expect(builder.send(:url_set).links_count).to eq(2)
+      end
+    end
+
+    context "with url_filter that modifies options" do
+      let(:adapter) do
+        SiteMaps.use(:noop) do
+          config.url = "https://example.com/sitemap.xml"
+          url_filter { |_url, opts| opts.merge(priority: 1.0) }
+        end
+      end
+
+      it "applies modified options" do
+        builder.add("/path", priority: 0.5)
+
+        xml = builder.send(:url_set).to_xml
+        expect(xml).to include("<priority>1.0</priority>")
+      end
+    end
+
     context "when the url_set is full" do
       before do
         builder.send(:url_set).instance_variable_set(:@links_count, SiteMaps::MAX_LENGTH[:links])

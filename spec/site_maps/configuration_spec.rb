@@ -46,6 +46,18 @@ RSpec.describe SiteMaps::Configuration do
     expect(configuration.directory).to eq("/tmp/sitemaps")
   end
 
+  it "has a default max_links" do
+    expect(configuration.max_links).to eq(50_000)
+  end
+
+  it "has a default emit_priority" do
+    expect(configuration.emit_priority).to be(true)
+  end
+
+  it "has a default emit_changefreq" do
+    expect(configuration.emit_changefreq).to be(true)
+  end
+
   context "when initialized with options" do
     subject(:configuration) do
       described_class.new(

@@ -37,6 +37,13 @@ module SiteMaps
 
     attribute :url
     attribute :directory, default: "/tmp/sitemaps"
+    attribute :max_links, default: 50_000
+    attribute :emit_priority, default: true
+    attribute :emit_changefreq, default: true
+    attribute :xsl_stylesheet_url
+    attribute :xsl_index_stylesheet_url
+    attribute :ping_search_engines, default: false
+    attribute :ping_engines
 
     def initialize(**options)
       default_attributes.merge(options).each do |key, value|
@@ -90,7 +97,7 @@ module SiteMaps
 
     def remote_sitemap_directory
       path = ::URI.parse(url).path
-      path = path[1..-1] if path.start_with?("/")
+      path = path[1..] if path.start_with?("/")
       path.split("/")[0..-2].join("/")
     end
 

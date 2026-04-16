@@ -6,7 +6,7 @@ module SiteMaps
 
     def initialize(adapter:, location: nil, notification_payload: {})
       @adapter = adapter
-      @url_set = SiteMaps::Builder::URLSet.new
+      @url_set = build_url_set
       @location = location
       @mutex = Mutex.new
       @notification_payload = notification_payload
@@ -15,10 +15,13 @@ module SiteMaps
     def add(path, params: nil, **options)
       @mutex.synchronize do
         link = build_link(path, params)
-        url_set.add(link, **options)
+        filtered_options = adapter.apply_url_filters(link, options)
+        return if filtered_options.nil?
+
+        url_set.add(link, **filtered_options)
       rescue SiteMaps::FullSitemapError
         finalize_and_start_next_urlset!
-        url_set.add(link, **options)
+        url_set.add(link, **filtered_options)
       end
     end
 
@@ -66,7 +69,16 @@ module SiteMaps
         adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
         add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
       end
-      @url_set = SiteMaps::Builder::URLSet.new
+      @url_set = build_url_set
+    end
+
+    def build_url_set
+      options = {}
+      options[:max_links] = config.max_links if config.respond_to?(:max_links)
+      options[:emit_priority] = config.emit_priority if config.respond_to?(:emit_priority)
+      options[:emit_changefreq] = config.emit_changefreq if config.respond_to?(:emit_changefreq)
+      options[:xsl_url] = config.xsl_stylesheet_url if config.respond_to?(:xsl_stylesheet_url)
+      SiteMaps::Builder::URLSet.new(**options)
     end
 
     def build_link(path, params)

@@ -32,5 +32,6 @@ module SiteMaps
     register_event "sitemaps.before_process_execution"
     register_event "sitemaps.enqueue_process"
     register_event "sitemaps.process_execution"
+    register_event "sitemaps.ping"
   end
 end

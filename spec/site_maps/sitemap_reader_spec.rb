@@ -52,6 +52,18 @@ RSpec.describe SiteMaps::SitemapReader do
 
         expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
       end
+
+      it "raises FileNotFoundError on connection errors" do
+        stub_request(:get, location).to_raise(Errno::ECONNREFUSED)
+
+        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
+      end
+
+      it "raises FileNotFoundError on socket errors" do
+        stub_request(:get, location).to_raise(SocketError)
+
+        expect { reader.read }.to raise_error(SiteMaps::SitemapReader::FileNotFoundError)
+      end
     end
 
     context "when the location is a remote gzipped XML file" do

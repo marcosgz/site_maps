@@ -54,6 +54,17 @@ RSpec.describe SiteMaps::Builder::URLSet do
       expect(instance.links_count).to eq(0)
       expect(instance.news_count).to eq(0)
     end
+
+    context "with xsl_url" do
+      it "includes the XSL processing instruction" do
+        instance = described_class.new(xsl_url: "https://example.com/style.xsl")
+        content = instance.content.string
+
+        expect(content).to start_with(described_class::XML_DECLARATION)
+        expect(content).to include('<?xml-stylesheet type="text/xsl" href="https://example.com/style.xsl"?>')
+        expect(content).to include("<urlset")
+      end
+    end
   end
 
   describe "#add" do
@@ -72,6 +83,25 @@ RSpec.describe SiteMaps::Builder::URLSet do
       expect do
         instance.add("http://example.com")
       end.to raise_error(SiteMaps::FullSitemapError)
+    end
+
+    context "with custom max_links" do
+      it "raises a FullSitemapError when max_links is reached" do
+        instance = described_class.new(max_links: 2)
+        instance.add("http://example.com/1")
+        instance.add("http://example.com/2")
+
+        expect do
+          instance.add("http://example.com/3")
+        end.to raise_error(SiteMaps::FullSitemapError)
+      end
+
+      it "allows adding up to max_links" do
+        instance = described_class.new(max_links: 3)
+        3.times { |i| instance.add("http://example.com/#{i}") }
+
+        expect(instance.links_count).to eq(3)
+      end
     end
 
     context "when the URL is a news URL" do
@@ -164,6 +194,30 @@ RSpec.describe SiteMaps::Builder::URLSet do
       instance.add("http://example.com")
 
       expect(instance).not_to be_empty
+    end
+  end
+
+  describe "emit_priority and emit_changefreq" do
+    it "omits priority when emit_priority is false" do
+      instance = described_class.new(emit_priority: false)
+      instance.add("http://example.com")
+
+      expect(instance.content.string).not_to include("<priority>")
+    end
+
+    it "omits changefreq when emit_changefreq is false" do
+      instance = described_class.new(emit_changefreq: false)
+      instance.add("http://example.com")
+
+      expect(instance.content.string).not_to include("<changefreq>")
+    end
+
+    it "includes both by default" do
+      instance = described_class.new
+      instance.add("http://example.com")
+
+      expect(instance.content.string).to include("<priority>")
+      expect(instance.content.string).to include("<changefreq>")
     end
   end
 

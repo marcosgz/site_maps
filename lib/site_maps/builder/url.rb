@@ -11,8 +11,11 @@ module SiteMaps::Builder
 
     attr_reader :attributes
 
-    def initialize(link, **attributes)
-      @attributes = DEFAULTS.merge(attributes)
+    def initialize(link, emit_priority: true, emit_changefreq: true, **attributes)
+      defaults = DEFAULTS.dup
+      defaults.delete(:priority) unless emit_priority
+      defaults.delete(:changefreq) unless emit_changefreq
+      @attributes = defaults.merge(attributes)
       @attributes[:loc] = link
       @attributes[:alternates] = SiteMaps::Primitive::Array.wrap(@attributes[:alternates])
       @attributes[:videos] = SiteMaps::Primitive::Array.wrap(@attributes[:videos])

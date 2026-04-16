@@ -3,6 +3,7 @@
 source "https://rubygems.org"
 
 gem "aws-sdk-s3"
+gem "base64"
 gem "dotenv"
 gem "nokogiri"
 gem "pry"

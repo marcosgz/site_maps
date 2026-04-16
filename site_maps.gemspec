@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
 
   spec.homepage = "https://github.com/marcosgz/site_maps"
   spec.license = "MIT"
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.7.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 3.2.0")
 
   raise "RubyGems 2.0 or newer is required to protect against public gem pushes." unless spec.respond_to?(:metadata)
 
