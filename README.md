@@ -4,8 +4,13 @@ A concurrent, incremental sitemap generator for Ruby. Framework-agnostic with bu
 
 Generates SEO-optimized XML sitemaps with support for sitemap indexes, XSL stylesheets, gzip compression, image/video/news extensions, search engine pinging, and Rack middleware for serving sitemaps with proper HTTP headers.
 
+## Documentation
+
+Full guides, adapter reference, CLI docs, and recipes are published at **[gems.marcosz.com.br/site_maps](https://gems.marcosz.com.br/site_maps/)** — part of the [marcosgz Ruby gem catalogue](https://gems.marcosz.com.br).
+
 ## Table of Contents
 
+- [Documentation](#documentation)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
