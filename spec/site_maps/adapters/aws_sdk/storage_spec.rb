@@ -28,10 +28,15 @@ RSpec.describe SiteMaps::Adapters::AwsSdk::Storage do
     let(:metadata) { {} }
 
     it "uploads the file to S3", freeze_at: [2024, 6, 24, 12, 30, 55] do
-      obj = instance_double(Aws::S3::Object)
-      expect(s3_bucket).to receive(:object).with("sitemaps/2024/sitemap1.xml").and_return(obj)
-      expect(obj).to receive(:upload_file).with(
+      transfer_manager = instance_double(Aws::S3::TransferManager)
+      s3_client = instance_double(Aws::S3::Client)
+      s3_resource = instance_double(Aws::S3::Resource, client: s3_client)
+      allow(config).to receive(:s3_resource).and_return(s3_resource)
+      expect(Aws::S3::TransferManager).to receive(:new).with(client: s3_client).and_return(transfer_manager)
+      expect(transfer_manager).to receive(:upload_file).with(
         "/tmp/sitemaps/2024/sitemap1.xml",
+        bucket: "example-bucket",
+        key: "sitemaps/2024/sitemap1.xml",
         acl: "public-read",
         cache_control: "max-age=3600",
         content_type: "application/xml",
