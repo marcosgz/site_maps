@@ -14,8 +14,7 @@ class SiteMaps::Adapters::AwsSdk::Storage
     lastmod = options.delete(:last_modified) || Time.now
     options[:metadata] ||= {}
     options[:metadata]["given-last-modified"] = lastmod.utc.strftime("%Y-%m-%dT%H:%M:%S%:z")
-    obj = object(location.remote_path)
-    obj.upload_file(location.path, **options)
+    transfer_manager.upload_file(location.path, bucket: config.bucket, key: location.remote_path, **options)
   end
 
   def read(location)
@@ -48,5 +47,9 @@ class SiteMaps::Adapters::AwsSdk::Storage
 
   def object(remote_path)
     config.s3_bucket.object(remote_path)
+  end
+
+  def transfer_manager
+    @transfer_manager ||= ::Aws::S3::TransferManager.new(client: config.s3_resource.client)
   end
 end
