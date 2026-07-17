@@ -28,11 +28,21 @@ module SiteMaps
     # Both options accept a callable (0-arg or 1-arg receiving env), which is useful
     # in multi-tenant setups where the prefix depends on the current request/site.
     #
+    # @param aliases [Hash{String=>String}, #call, nil] Maps an incoming **public
+    #   request path** to another public request path, applied before prefix
+    #   handling. Serves the target's content at the alias path (no redirect).
+    #
+    #   Example: serve the sitemap index at both locations →
+    #   `aliases: { "/sitemap.xml" => "/sitemap_index.xml" }`
+    #
+    #   Accepts a callable (0-arg or 1-arg receiving env) returning such a hash.
+    #
     def initialize(
       app,
       adapter: nil,
       public_prefix: nil,
       storage_prefix: nil,
+      aliases: nil,
       x_robots_tag: DEFAULT_X_ROBOTS_TAG,
       cache_control: DEFAULT_CACHE_CONTROL
     )
@@ -40,12 +50,13 @@ module SiteMaps
       @adapter = adapter
       @public_prefix = public_prefix
       @storage_prefix = storage_prefix
+      @aliases = aliases
       @x_robots_tag = x_robots_tag
       @cache_control = cache_control
     end
 
     def call(env)
-      path = env["PATH_INFO"]
+      path = resolve_alias(env["PATH_INFO"], env)
 
       if xsl_request?(path)
         serve_xsl(path)
@@ -73,6 +84,16 @@ module SiteMaps
     end
 
     private
+
+    # Rewrites the incoming public path through the alias map (if configured)
+    # before any prefix handling, so the aliased path takes the exact same code
+    # path as a real request for the target.
+    def resolve_alias(path, env)
+      aliases = @aliases.respond_to?(:call) ? call_with_env(@aliases, env) : @aliases
+      return path unless aliases
+
+      aliases[path] || path
+    end
 
     def resolve_adapter(env)
       if @adapter.respond_to?(:call)

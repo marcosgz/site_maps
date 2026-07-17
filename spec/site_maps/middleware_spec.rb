@@ -258,6 +258,68 @@ RSpec.describe SiteMaps::Middleware do
       end
     end
 
+    context "with aliases" do
+      let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
+      let(:adapter) do
+        dir = fixtures_dir
+        SiteMaps.use(:file_system) do
+          config.url = "https://example.com/sitemap.xml"
+          config.directory = dir
+        end
+      end
+      let(:middleware) do
+        described_class.new(inner_app, adapter: adapter,
+          aliases: {"/sitemap.xml" => "/sitemap_index.xml"})
+      end
+
+      it "serves the alias target's content at the alias path" do
+        env = {"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET"}
+        status, headers, body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(headers["content-type"]).to eq("text/xml; charset=UTF-8")
+        expect(body.first).to include("<sitemapindex")
+      end
+
+      it "serves identical content at the alias path and the target path" do
+        _status, _headers, aliased = middleware.call({"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET"})
+        _status, _headers, direct = middleware.call({"PATH_INFO" => "/sitemap_index.xml", "REQUEST_METHOD" => "GET"})
+
+        expect(aliased.first).to eq(direct.first)
+      end
+
+      it "passes through paths that are not aliased" do
+        env = {"PATH_INFO" => "/about", "REQUEST_METHOD" => "GET"}
+        status, _headers, body = middleware.call(env)
+
+        expect(status).to eq(404)
+        expect(body).to eq(["Not Found"])
+      end
+    end
+
+    context "with a callable aliases map" do
+      let(:fixtures_dir) { File.expand_path("../fixtures", __dir__) }
+      let(:adapter) do
+        dir = fixtures_dir
+        SiteMaps.use(:file_system) do
+          config.url = "https://example.com/sitemap.xml"
+          config.directory = dir
+        end
+      end
+      let(:middleware) do
+        described_class.new(inner_app, adapter: adapter,
+          aliases: -> { {"/sitemap.xml" => "/sitemap_index.xml"} })
+      end
+
+      it "resolves the alias map per request" do
+        env = {"PATH_INFO" => "/sitemap.xml", "REQUEST_METHOD" => "GET"}
+        status, _headers, body = middleware.call(env)
+
+        expect(status).to eq(200)
+        expect(body.first).to include("<sitemapindex")
+      end
+    end
+
     context "with custom headers" do
       let(:middleware) do
         described_class.new(inner_app, adapter: adapter, x_robots_tag: "noindex", cache_control: "private")
