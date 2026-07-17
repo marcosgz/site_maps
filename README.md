@@ -269,6 +269,7 @@ Use these when the public URL path and the storage path differ:
 |---|---|---|
 | `public_prefix:` | Public URL has an extra prefix → strip it to find the file | Stored at `/sitemap.xml`, served at `/sitemaps/tenant/sitemap.xml` |
 | `storage_prefix:` | Storage has an extra prefix → prepend it to the public path | Stored at `/sitemaps/tenant/sitemap.xml`, served at `/sitemap.xml` |
+| `aliases:` | Serve one public path's content at another public path (no redirect) | `/sitemap.xml` serves the content of `/sitemap_index.xml` |
 
 ```ruby
 # Sitemaps stored at /sitemaps/{slug}/sitemap.xml, served at /sitemap.xml
@@ -282,6 +283,20 @@ Rails.application.middleware.insert_after MultitenancyMiddleware, SiteMaps::Midd
   public_prefix: -> { site = Current.site; "/sitemaps/#{site.slug}" if site },
   adapter: -> { ... }
 ```
+
+`aliases:` maps an incoming public request path to another public request path,
+applied before the prefix options. Use it to serve the same content at multiple
+locations — for example, to answer the conventional `/sitemap.xml` with the
+sitemap index that is stored/served as `/sitemap_index.xml`:
+
+```ruby
+Rails.application.middleware.insert_after MultitenancyMiddleware, SiteMaps::Middleware,
+  aliases: { "/sitemap.xml" => "/sitemap_index.xml" },
+  storage_prefix: -> { site = Current.site; "/sitemaps/#{site.slug}" if site },
+  adapter: -> { ... }
+```
+
+It accepts a hash or a callable (0-arg or 1-arg receiving `env`) returning a hash.
 
 XSL stylesheet requests (`/_sitemap-stylesheet.xsl`, `/_sitemap-index-stylesheet.xsl`) are served directly without resolving the adapter or prefix.
 
@@ -536,6 +551,7 @@ use SiteMaps::Middleware,
   adapter: SiteMaps.current_adapter,        # defaults to SiteMaps.current_adapter
   public_prefix: nil,                       # strip this prefix from the public URL before lookup
   storage_prefix: nil,                      # prepend this prefix to the public URL for storage lookup
+  aliases: nil,                             # map a public path to another public path, e.g. { "/sitemap.xml" => "/sitemap_index.xml" }
   x_robots_tag: "noindex, follow",          # default
   cache_control: "public, max-age=3600"     # default
 ```
