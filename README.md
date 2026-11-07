@@ -1,4 +1,9 @@
-# SiteMaps
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-sitemaps-on-dark.svg">
+    <img alt="SiteMaps" src="docs/brand/lockup-sitemaps-on-light.svg" width="310">
+  </picture>
+</h1>
 
 A concurrent, incremental sitemap generator for Ruby. Framework-agnostic with built-in Rails support.
 
