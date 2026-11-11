@@ -12,7 +12,11 @@ module SiteMaps::Adapters
       end
     end
 
-    def_delegators :config, :fetch_sitemap_index_links
+    SITEMAP_ENTRY_RE = %r{<sitemap>(.*?)</sitemap>}m
+    LOC_RE = %r{<loc>\s*(.*?)\s*</loc>}m
+    LASTMOD_RE = %r{<lastmod>\s*(.*?)\s*</lastmod>}m
+    XML_ENTITIES = {"&amp;" => "&", "&lt;" => "<", "&gt;" => ">", "&quot;" => '"', "&apos;" => "'"}.freeze
+
     attr_reader :sitemap_index, :processes, :process_mixins
 
     def initialize(**options, &block)
@@ -46,6 +50,28 @@ module SiteMaps::Adapters
     # @raise [SiteMaps::FileNotFoundError] if the file does not exist
     def delete(_url)
       raise NotImplementedError
+    end
+
+    # @abstract
+    # @return [Array<SiteMaps::Builder::SitemapIndex::Item>] every sitemap file stored under the sitemap directory
+    # @raise [NotImplementedError] if the adapter can not list its storage
+    def list_sitemaps
+      raise NotImplementedError, "#{self.class} does not support listing stored sitemaps"
+    end
+
+    # Reads the current sitemap index straight from the adapter storage.
+    # Adapters without a #read implementation fall back to fetching the index URL.
+    #
+    # @return [Array<SiteMaps::Builder::SitemapIndex::Item>]
+    def fetch_sitemap_index_links
+      raw_data, metadata = read(config.url)
+      return [] if raw_data.nil?
+
+      parse_sitemap_index(decompress(raw_data, metadata))
+    rescue SiteMaps::FileNotFoundError
+      []
+    rescue NotImplementedError
+      config.fetch_sitemap_index_links
     end
 
     def config
@@ -105,6 +131,25 @@ module SiteMaps::Adapters
       xsl_url = config.respond_to?(:xsl_index_stylesheet_url) ? config.xsl_index_stylesheet_url : nil
       @sitemap_index = SiteMaps::Builder::SitemapIndex.new(xsl_url: xsl_url)
       @repo = nil
+    end
+
+    private
+
+    def parse_sitemap_index(xml)
+      xml.scan(SITEMAP_ENTRY_RE).filter_map do |(entry)|
+        loc = entry[LOC_RE, 1]
+        next if loc.nil? || loc.empty?
+
+        SiteMaps::Builder::SitemapIndex::Item.new(loc.gsub(/&(?:amp|lt|gt|quot|apos);/, XML_ENTITIES), entry[LASTMOD_RE, 1])
+      end
+    end
+
+    def decompress(raw_data, metadata)
+      return raw_data unless metadata.is_a?(Hash) && metadata[:content_type] == "application/gzip"
+
+      Zlib::GzipReader.new(StringIO.new(raw_data)).read
+    rescue Zlib::GzipFile::Error
+      raw_data
     end
   end
 end

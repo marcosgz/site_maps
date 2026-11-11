@@ -4,8 +4,11 @@ module SiteMaps
   class SitemapBuilder
     extend Forwardable
 
+    attr_reader :written_urls
+
     def initialize(adapter:, location: nil, notification_payload: {})
       @adapter = adapter
+      @written_urls = []
       @url_set = build_url_set
       @location = location
       @mutex = Mutex.new
@@ -43,10 +46,12 @@ module SiteMaps
         if adapter.maybe_inline_urlset? && sitemap_index.empty?
           payload[:url] = repo.main_url
           adapter.write(repo.main_url, raw_data, last_modified: url_set.last_modified)
+          written_urls << repo.main_url
         else
           sitemap_url = repo.generate_url(location)
           payload[:url] = sitemap_url
           adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
+          written_urls << sitemap_url
           add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
         end
       end
@@ -67,6 +72,7 @@ module SiteMaps
         payload[:news_count] = url_set.news_count
         payload[:last_modified] = url_set.last_modified
         adapter.write(sitemap_url, raw_data, last_modified: url_set.last_modified)
+        written_urls << sitemap_url
         add_sitemap_index(sitemap_url, lastmod: url_set.last_modified)
       end
       @url_set = build_url_set

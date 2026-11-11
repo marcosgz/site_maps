@@ -63,6 +63,8 @@ When you call `runner.run`:
 3. Each process builds a `URLSet`. When the set fills up (50,000 links, 1,000 news items, or 50 MB uncompressed), it's finalized and written, and a new URLSet starts — automatically.
 4. After every process finishes, the sitemap index is aggregated and written to `config.url`.
 
+By default the first failing process stops the run and the index is left untouched. With `index_from_storage` the remaining processes still run, the index is written, and the first error is re-raised afterwards.
+
 ## Splitting rules
 
 A URL set is finalized and rolled over when **any** of these apply:
@@ -82,6 +84,32 @@ A sitemap index is produced when:
 - External sitemaps were added.
 
 Otherwise a single `urlset` is written directly at `config.url` (the "inline" optimization).
+
+On a partial run the existing index is read back through the adapter, and the entries of shards that were not regenerated are kept.
+
+### Building the index from storage
+
+Set `index_from_storage` when the index must always reflect what is stored, no matter which processes ran or failed:
+
+```ruby
+SiteMaps.use(:aws_sdk) do
+  configure do |config|
+    config.url = "https://example.com/sitemap.xml"
+    config.index_from_storage = true
+  end
+  # ...
+end
+```
+
+The index then lists every stored file that matches a declared process location, plus the external sitemaps. A successful process deletes the numbered parts it no longer writes. Files of failed processes are left as they were.
+
+To rebuild a lost or stale index without querying any data source:
+
+```ruby
+SiteMaps.generate(config_file: "config/sitemap.rb").rebuild_index!
+```
+
+Adapters need `#list_sitemaps` for this option (built in for `:file_system`, `:aws_sdk` and `:noop`).
 
 ## Adding external sitemaps
 

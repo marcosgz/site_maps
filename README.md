@@ -114,6 +114,7 @@ SiteMaps.use(:file_system, url: "https://example.com/sitemap.xml.gz", directory:
 | `xsl_index_stylesheet_url` | `nil` | URL of the XSL stylesheet for the sitemap index. |
 | `ping_search_engines` | `false` | Ping search engines after sitemap generation. |
 | `ping_engines` | `nil` | Custom engines hash. Defaults to Bing when `nil`. |
+| `index_from_storage` | `false` | Build the sitemap index from the files found in storage. The index survives failed processes and lists every stored shard. See [Index generation](docs/processes.md#index-generation). |
 
 ### Gzip Compression
 

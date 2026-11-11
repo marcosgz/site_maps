@@ -11,6 +11,7 @@ module SiteMaps
       @execution = Concurrent::Hash.new
       @failed = Concurrent::AtomicBoolean.new(false)
       @errors = Concurrent::Array.new
+      @written = Concurrent::Array.new
     end
 
     def enqueue(process_name = :default, **kwargs)
@@ -68,6 +69,7 @@ module SiteMaps
                 adapter.process_mixins.each { |mixin| builder.extend(mixin) }
                 process.call(builder, **kwargs)
                 builder.finalize!
+                written << [process.location(**kwargs), builder.written_urls]
               end
             end
           end
@@ -75,30 +77,104 @@ module SiteMaps
       end
 
       futures.each(&:wait)
-      failed.false? ? finalize! : fail_with_errors!
+      if failed.false?
+        finalize!
+      else
+        write_index! if index_from_storage?
+        fail_with_errors!
+      end
     ensure
       pool.shutdown
       pool.wait_for_termination
       @execution.clear
+      @written.clear
+    end
+
+    # Rewrites the sitemap index from the sitemap files found in storage,
+    # without running any process.
+    def rebuild_index!
+      add_stored_index_links(adapter.list_sitemaps)
+      add_external_index_links
+      write_sitemap_index
+      self
     end
 
     private
 
-    attr_reader :pool, :failed, :errors
+    attr_reader :pool, :failed, :errors, :written
 
     def finalize!
-      adapter.repo.remaining_index_links.each do |item|
-        adapter.sitemap_index.add(item)
+      write_index!
+      should_ping = @ping.nil? ? adapter.config.respond_to?(:ping_search_engines?) && adapter.config.ping_search_engines? : @ping
+      ping_search_engines if should_ping
+    end
+
+    def write_index!
+      if index_from_storage?
+        add_stored_index_links(prune_stale_sitemaps(adapter.list_sitemaps))
+      else
+        adapter.repo.remaining_index_links.each do |item|
+          adapter.sitemap_index.add(item)
+        end
       end
+      add_external_index_links
+      write_sitemap_index
+    end
+
+    def write_sitemap_index
+      return if adapter.sitemap_index.empty?
+
+      raw_data = adapter.sitemap_index.to_xml
+      adapter.write(adapter.config.url, raw_data, last_modified: adapter.sitemap_index.last_modified)
+    end
+
+    def add_external_index_links
       adapter.external_sitemaps.each do |item|
         adapter.sitemap_index.add(item)
       end
-      unless adapter.sitemap_index.empty?
-        raw_data = adapter.sitemap_index.to_xml
-        adapter.write(adapter.config.url, raw_data, last_modified: adapter.sitemap_index.last_modified)
+    end
+
+    # Adds the stored files that belong to a declared process. Files written by
+    # this run are already in the index, and the index keeps the first entry
+    # added for each location.
+    def add_stored_index_links(stored)
+      patterns = adapter.processes.values.map do |process|
+        SiteMaps::IncrementalLocation.template_pattern(adapter.config.url, process.location_template)
       end
-      should_ping = @ping.nil? ? adapter.config.respond_to?(:ping_search_engines?) && adapter.config.ping_search_engines? : @ping
-      ping_search_engines if should_ping
+
+      stored.each do |item|
+        next if item.loc == adapter.config.url
+        next unless patterns.any? { |pattern| pattern.match?(item.loc) }
+
+        adapter.sitemap_index.add(item)
+      end
+    end
+
+    # Deletes the numbered parts a successful process no longer writes, such as
+    # sitemap3.xml after a month shrank to two files. Returns the stored files
+    # that are left.
+    def prune_stale_sitemaps(stored)
+      stale = written.flat_map do |location, urls|
+        next [] if urls.empty?
+
+        pattern = SiteMaps::IncrementalLocation.new(adapter.config.url, location).pattern
+        stored.select { |item| pattern.match?(item.loc) && !urls.include?(item.loc) && item.loc != adapter.config.url }
+      end
+
+      stale.each do |item|
+        SiteMaps::Notification.instrument("sitemaps.prune_sitemap") do |payload|
+          payload[:url] = item.loc
+          adapter.delete(item.loc)
+        rescue SiteMaps::FileNotFoundError
+          nil
+        end
+      end
+
+      stored - stale
+    end
+
+    def index_from_storage?
+      adapter.config.respond_to?(:index_from_storage?) && adapter.config.index_from_storage?
     end
 
     def ping_search_engines
@@ -119,6 +195,7 @@ module SiteMaps
     end
 
     def may_preload_sitemap_index
+      return if index_from_storage?
       return unless preload_sitemap_index_links?
 
       adapter.fetch_sitemap_index_links.each do |item|
@@ -126,8 +203,10 @@ module SiteMaps
       end
     end
 
+    # A failure stops the remaining processes, unless the index is rebuilt from
+    # storage: then every independent process still gets its chance to publish.
     def wrap_process_execution(process)
-      return if failed.true?
+      return if failed.true? && !index_from_storage?
 
       yield
     rescue => e

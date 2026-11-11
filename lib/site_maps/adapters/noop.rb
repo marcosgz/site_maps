@@ -14,5 +14,9 @@ module SiteMaps::Adapters
     def fetch_sitemap_index_links
       []
     end
+
+    def list_sitemaps
+      []
+    end
   end
 end

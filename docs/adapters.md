@@ -138,6 +138,7 @@ end
 | `#write(url, raw_data, **kwargs)` | Persist `raw_data` at the location implied by `url`. |
 | `#read(url)` | Return `[raw_data, { content_type: '…' }]` for the given URL. |
 | `#delete(url)` | Remove the file at the URL. |
+| `#list_sitemaps` | (optional) Return a `SiteMaps::Builder::SitemapIndex::Item` for every stored sitemap file. Required by `index_from_storage`. |
 | `.config_class` | (optional) Return a `Configuration` subclass to expose adapter-specific settings. |
 
 The adapter base class handles everything else: URL filters, the process registry, and thread-safe URL tracking.

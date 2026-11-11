@@ -4,6 +4,14 @@ module SiteMaps
   class IncrementalLocation
     FILENAME = "sitemap.xml"
     PLACEHOLDER = "%{index}"
+    ANY_SEGMENT = "__site_maps_any_segment__"
+    TEMPLATE_KEY_RE = /%\{\w+\}/
+
+    # Matches every file a process location template may produce, whatever its
+    # keyword arguments and part number.
+    def self.template_pattern(main_url, location_template)
+      new(main_url, location_template&.gsub(TEMPLATE_KEY_RE, ANY_SEGMENT)).pattern
+    end
 
     def initialize(main_url, process_location)
       @main_uri = URI(main_url)
@@ -22,6 +30,14 @@ module SiteMaps
 
     def main_url
       main_uri.to_s
+    end
+
+    # @return [Regexp] matches every numbered part of this location
+    def pattern
+      source = Regexp.escape(placeholder_url)
+        .sub(Regexp.escape(PLACEHOLDER)) { "\\d+" }
+        .gsub(ANY_SEGMENT) { "[^/]+" }
+      Regexp.new("\\A#{source}\\z")
     end
 
     def relative_directory

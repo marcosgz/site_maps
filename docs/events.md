@@ -57,6 +57,7 @@ This is subscribed automatically by the CLI.
 | `sitemaps.process_execution` | `process`, `kwargs`, `runtime` |
 | `sitemaps.finalize_urlset` | `url`, `links_count`, `news_count`, `last_modified`, `runtime`, `process` |
 | `sitemaps.ping` | `results` |
+| `sitemaps.prune_sitemap` | `url`, `runtime` |
 
 `process` is a `SiteMaps::Process` struct (`name`, `location_template`, `kwargs_template`, `block`).
 

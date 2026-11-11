@@ -175,4 +175,53 @@ RSpec.describe SiteMaps::Adapters::FileSystem do
       end
     end
   end
+
+  describe "#list_sitemaps" do
+    it "lists the sitemap files under the sitemap directory" do
+      adapter.write("https://example.com/my-site/sitemap.xml", "<sitemapindex/>")
+      adapter.write("https://example.com/my-site/posts/2024/sitemap1.xml", "<urlset/>")
+      adapter.write("https://example.com/my-site/news.xml.gz", "<urlset/>")
+      adapter.write("https://example.com/other-site/sitemap1.xml", "<urlset/>")
+
+      items = adapter.list_sitemaps
+
+      expect(items.map(&:loc)).to contain_exactly(
+        "https://example.com/my-site/sitemap.xml",
+        "https://example.com/my-site/posts/2024/sitemap1.xml",
+        "https://example.com/my-site/news.xml.gz"
+      )
+      expect(items.map(&:lastmod)).to all(be_a(Time))
+    end
+
+    it "returns an empty list when nothing was written" do
+      expect(adapter.list_sitemaps).to eq([])
+    end
+  end
+
+  describe "#fetch_sitemap_index_links" do
+    it "reads the index from storage" do
+      adapter.write(adapter.config.url, <<~XML)
+        <?xml version="1.0" encoding="UTF-8"?>
+        <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          <sitemap>
+            <loc>https://example.com/my-site/posts/2024/sitemap1.xml?a=1&amp;b=2</loc>
+            <lastmod>2024-06-24T12:30:55+00:00</lastmod>
+          </sitemap>
+          <sitemap>
+            <loc>https://example.com/my-site/static/sitemap1.xml</loc>
+          </sitemap>
+        </sitemapindex>
+      XML
+
+      expect(adapter.fetch_sitemap_index_links).to eq([
+        SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/posts/2024/sitemap1.xml?a=1&b=2", "2024-06-24T12:30:55+00:00"),
+        SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/static/sitemap1.xml", nil)
+      ])
+      expect(adapter.fetch_sitemap_index_links.first.lastmod).to eq("2024-06-24T12:30:55+00:00")
+    end
+
+    it "returns an empty list when the index does not exist" do
+      expect(adapter.fetch_sitemap_index_links).to eq([])
+    end
+  end
 end

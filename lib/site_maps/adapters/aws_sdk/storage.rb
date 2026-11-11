@@ -37,13 +37,13 @@ class SiteMaps::Adapters::AwsSdk::Storage
     raise SiteMaps::FileNotFoundError, "File not found: #{location.remote_path}"
   end
 
-  private
-
-  def list_objects(prefix:)
-    config.s3_bucket.objects(
-      prefix: prefix
-    )
+  # @param [String] prefix
+  # @return [Array<Array(String, Time)>] the key and last modified time of every object under the prefix
+  def list(prefix)
+    config.s3_bucket.objects(prefix: prefix).map { |object| [object.key, object.last_modified] }
   end
+
+  private
 
   def object(remote_path)
     config.s3_bucket.object(remote_path)

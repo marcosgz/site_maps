@@ -77,4 +77,36 @@ RSpec.describe SiteMaps::Adapters::AwsSdk do
       delete!
     end
   end
+
+  describe "#list_sitemaps" do
+    it "lists the sitemap objects under the sitemap directory" do
+      time = Time.utc(2024, 6, 24)
+      storage = adapter.send(:s3_storage)
+      allow(storage).to receive(:list).with("my-site/").and_return([
+        ["my-site/sitemap.xml", time],
+        ["my-site/posts/2024/sitemap1.xml.gz", time],
+        ["my-site/robots.txt", time]
+      ])
+
+      expect(adapter.list_sitemaps).to eq([
+        SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/sitemap.xml", time),
+        SiteMaps::Builder::SitemapIndex::Item.new("https://example.com/my-site/posts/2024/sitemap1.xml.gz", time)
+      ])
+    end
+  end
+
+  describe "#fetch_sitemap_index_links" do
+    it "reads a gzipped index from S3" do
+      xml = "<sitemapindex><sitemap><loc>https://example.com/my-site/posts/2024/sitemap1.xml</loc></sitemap></sitemapindex>"
+      allow(adapter.send(:s3_storage)).to receive(:read).and_return([Zlib.gzip(xml), {content_type: "application/gzip"}])
+
+      expect(adapter.fetch_sitemap_index_links.map(&:loc)).to eq(["https://example.com/my-site/posts/2024/sitemap1.xml"])
+    end
+
+    it "returns an empty list when the index does not exist" do
+      allow(adapter.send(:s3_storage)).to receive(:read).and_raise(SiteMaps::FileNotFoundError)
+
+      expect(adapter.fetch_sitemap_index_links).to eq([])
+    end
+  end
 end
