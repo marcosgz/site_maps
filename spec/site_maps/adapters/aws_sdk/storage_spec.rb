@@ -114,4 +114,14 @@ RSpec.describe SiteMaps::Adapters::AwsSdk::Storage do
       end
     end
   end
+
+  describe "#list" do
+    it "returns the key and last modified time of the objects under the prefix" do
+      time = Time.utc(2024, 6, 24)
+      object = instance_double(Aws::S3::ObjectSummary, key: "sitemaps/2024/sitemap1.xml", last_modified: time)
+      allow(s3_bucket).to receive(:objects).with(prefix: "sitemaps/").and_return([object])
+
+      expect(storage.list("sitemaps/")).to eq([["sitemaps/2024/sitemap1.xml", time]])
+    end
+  end
 end

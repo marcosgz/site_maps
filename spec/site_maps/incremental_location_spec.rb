@@ -106,4 +106,33 @@ RSpec.describe SiteMaps::IncrementalLocation do
       expect(location.relative_directory).to eq("sitemaps/my-site/group")
     end
   end
+
+  describe "#pattern" do
+    it "matches every numbered part of the location" do
+      pattern = described_class.new(index_url, "posts/2024/sitemap.xml").pattern
+
+      expect(pattern).to match("https://example.com/sitemaps/posts/2024/sitemap1.xml")
+      expect(pattern).to match("https://example.com/sitemaps/posts/2024/sitemap12.xml")
+      expect(pattern).not_to match("https://example.com/sitemaps/posts/2024/sitemap.xml")
+      expect(pattern).not_to match("https://example.com/sitemaps/posts/2025/sitemap1.xml")
+    end
+  end
+
+  describe ".template_pattern" do
+    it "matches the files of any keyword argument" do
+      pattern = described_class.template_pattern(index_url, "posts/%{year}-%{month}/sitemap.xml")
+
+      expect(pattern).to match("https://example.com/sitemaps/posts/2024-1/sitemap1.xml")
+      expect(pattern).to match("https://example.com/sitemaps/posts/2026-11/sitemap3.xml")
+      expect(pattern).not_to match("https://example.com/sitemaps/posts/2024/sitemap1.xml")
+      expect(pattern).not_to match("https://example.com/sitemaps/static/sitemap1.xml")
+    end
+
+    it "matches the default location when there is no template" do
+      pattern = described_class.template_pattern(index_url, nil)
+
+      expect(pattern).to match("https://example.com/sitemaps/sitemap_index1.xml")
+      expect(pattern).not_to match(index_url)
+    end
+  end
 end

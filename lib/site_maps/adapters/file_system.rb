@@ -17,6 +17,15 @@ module SiteMaps::Adapters
       storage.delete(location)
     end
 
+    def list_sitemaps
+      root = Pathname.new(config.directory)
+      pattern = root.join(config.remote_sitemap_directory, "**", "*.{xml,xml.gz}").to_s
+      Dir.glob(pattern).map do |path|
+        relative = Pathname.new(path).relative_path_from(root).to_s
+        SiteMaps::Builder::SitemapIndex::Item.new("#{config.base_uri}/#{relative}", File.mtime(path))
+      end
+    end
+
     private
 
     def storage

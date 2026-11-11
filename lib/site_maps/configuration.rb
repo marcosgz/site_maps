@@ -44,6 +44,7 @@ module SiteMaps
     attribute :xsl_index_stylesheet_url
     attribute :ping_search_engines, default: false
     attribute :ping_engines
+    attribute :index_from_storage, default: false
 
     def initialize(**options)
       default_attributes.merge(options).each do |key, value|

@@ -365,4 +365,134 @@ RSpec.describe SiteMaps::Runner do
       end
     end
   end
+
+  context "when the index is built from storage" do
+    let(:index_url) { "https://example.com/site/sitemap_index.xml" }
+    let(:adapter) do
+      SiteMaps.use(:file_system) do
+        configure do |config|
+          config.url = "https://example.com/site/sitemap_index.xml"
+          config.directory = "/tmp/site_maps/runner"
+          config.index_from_storage = true
+        end
+
+        process(:static, "static/sitemap.xml") do |s|
+          s.add("/index.html")
+        end
+
+        process(:posts, "posts/%{year}/sitemap.xml", year: 2024) do |s, year:|
+          raise ArgumentError, "API down" if year == 2020
+
+          s.add("/posts/#{year}/index.html")
+        end
+      end
+    end
+    let(:runner) { described_class.new(adapter, max_threads: 2) }
+
+    def store(path)
+      adapter.write("https://example.com/site/#{path}", "<urlset/>")
+    end
+
+    def index_locs
+      adapter.fetch_sitemap_index_links.map(&:loc)
+    end
+
+    after do
+      FileUtils.rm_rf("/tmp/site_maps")
+    end
+
+    it "keeps the stored files of the processes it did not run" do
+      store("posts/2019/sitemap1.xml")
+      store("posts/2018/sitemap1.xml")
+
+      runner.enqueue(:static).enqueue(:posts, year: 2024).run
+
+      expect(index_locs).to contain_exactly(
+        "https://example.com/site/static/sitemap1.xml",
+        "https://example.com/site/posts/2024/sitemap1.xml",
+        "https://example.com/site/posts/2019/sitemap1.xml",
+        "https://example.com/site/posts/2018/sitemap1.xml"
+      )
+    end
+
+    it "leaves out stored files that no process declares" do
+      store("legacy/sitemap1.xml")
+
+      runner.enqueue(:static).run
+
+      expect(index_locs).to contain_exactly("https://example.com/site/static/sitemap1.xml")
+    end
+
+    it "does not preload the index" do
+      expect(adapter).not_to receive(:fetch_sitemap_index_links)
+
+      runner.enqueue(:static).run
+    end
+
+    it "writes the index and runs the other processes when a process fails" do
+      store("posts/2020/sitemap1.xml")
+
+      runner.enqueue(:posts, year: 2020).enqueue(:static).enqueue(:posts, year: 2024)
+
+      expect { runner.run }.to raise_error(ArgumentError, "API down")
+      expect(index_locs).to contain_exactly(
+        "https://example.com/site/static/sitemap1.xml",
+        "https://example.com/site/posts/2024/sitemap1.xml",
+        "https://example.com/site/posts/2020/sitemap1.xml"
+      )
+    end
+
+    it "deletes the parts a successful process no longer writes" do
+      store("posts/2024/sitemap2.xml")
+      store("posts/2020/sitemap2.xml")
+
+      runner.enqueue(:posts, year: 2024).enqueue(:posts, year: 2020)
+
+      expect { runner.run }.to raise_error(ArgumentError)
+      expect(adapter.list_sitemaps.map(&:loc)).not_to include("https://example.com/site/posts/2024/sitemap2.xml")
+      expect(adapter.list_sitemaps.map(&:loc)).to include("https://example.com/site/posts/2020/sitemap2.xml")
+      expect(index_locs).to contain_exactly(
+        "https://example.com/site/posts/2024/sitemap1.xml",
+        "https://example.com/site/posts/2020/sitemap2.xml"
+      )
+    end
+
+    it "does not delete anything for a process that wrote no file" do
+      empty_adapter = SiteMaps.use(:file_system) do
+        configure do |config|
+          config.url = "https://example.com/site/sitemap_index.xml"
+          config.directory = "/tmp/site_maps/runner"
+          config.index_from_storage = true
+        end
+        process(:posts, "posts/%{year}/sitemap.xml", year: 2024) { |_s, **| }
+      end
+      empty_adapter.write("https://example.com/site/posts/2024/sitemap1.xml", "<urlset/>")
+
+      described_class.new(empty_adapter).enqueue(:posts).run
+
+      expect(empty_adapter.list_sitemaps.map(&:loc)).to include("https://example.com/site/posts/2024/sitemap1.xml")
+    end
+
+    describe "#rebuild_index!" do
+      it "writes the index from storage without running any process" do
+        store("static/sitemap1.xml")
+        store("posts/2023/sitemap1.xml")
+        store("posts/2023/sitemap2.xml")
+        expect(adapter.processes[:static]).not_to receive(:call)
+
+        expect(runner.rebuild_index!).to eq(runner)
+        expect(index_locs).to contain_exactly(
+          "https://example.com/site/static/sitemap1.xml",
+          "https://example.com/site/posts/2023/sitemap1.xml",
+          "https://example.com/site/posts/2023/sitemap2.xml"
+        )
+      end
+
+      it "does not write an index when storage is empty" do
+        runner.rebuild_index!
+
+        expect { adapter.read(index_url) }.to raise_error(SiteMaps::FileNotFoundError)
+      end
+    end
+  end
 end
