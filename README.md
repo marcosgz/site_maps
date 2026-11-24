@@ -804,4 +804,4 @@ Bug reports and pull requests are welcome on [GitHub](https://github.com/marcosg
 
 ## License
 
-Available as open source under the [MIT License](https://opensource.org/licenses/MIT).
+Available as open source under the [GNU General Public License v3.0 or later](https://www.gnu.org/licenses/gpl-3.0.html).

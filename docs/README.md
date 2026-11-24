@@ -64,4 +64,4 @@ Generated: `public/sitemap.xml` (plus an indexed chain if the URL set exceeds 50
 
 ## License
 
-MIT.
+GPL-3.0-or-later.
